@@ -6,12 +6,14 @@ import authRoutes from './routes/authRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
 import bookingRoutes from "./routes/bookingRoutes.js"
 import reviewRoutes from "./routes/reviewRoutes.js"
+import propertyRoutes from './routes/propertyRoutes.js';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/api", propertyRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/bookings", bookingRoutes);
