@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import PropertyCard from "../components/PropertyCard";
+import ListingCard from "../components/ListingCard";
 import "../styles/Home.css";
 
 interface Property {

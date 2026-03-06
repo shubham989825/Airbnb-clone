@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import PropertyDetails from "./pages/PropertyDetails";
+import AddProperty from "./pages/AddProperty";
 
 const App = () => {
   return (
@@ -17,7 +18,8 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/property/:id" element={<PropertyDetails />} />
-        </Routes>
+          <Route path='/add-property' element={<AddProperty />} />
+          </Routes>
       </main>
     </div>
   );

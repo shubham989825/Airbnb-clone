@@ -23,6 +23,7 @@ const Navbar = () => {
           <>
             <Link to="/login" className="navbar-button">Login</Link>
             <Link to="/register" className="navbar-button">Register</Link>
+            <Link to="/add-property" className="navbar-button">Add Property</Link>
           </>
         )}
       </div>
