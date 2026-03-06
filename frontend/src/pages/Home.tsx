@@ -1,48 +1,47 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
-import PropertyCard from "../components/PropertyCard";
 import ListingCard from "../components/ListingCard";
 import "../styles/Home.css";
 
-interface Property {
+interface Listing {
   _id: string;
   title: string;
-  price: number | string;
+  price: number;
   city?: string;
   image: string;
 }
 
 const Home = () => {
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProperties = async () => {
+    const fetchListings = async () => {
       try {
-        const res = await axiosInstance.get("/properties");
-        setProperties(res.data);
+        const res = await axiosInstance.get("/listings");
+        setListings(res.data);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchProperties();
+
+    fetchListings();
   }, []);
 
   if (loading) return <p className="home-loading">Loading properties...</p>;
 
   return (
     <div className="home-grid">
-      {properties.map((prop) => (
-        <PropertyCard
-          key={prop._id}
-          id={prop._id || ""}
-          title={prop.title || "Untitled"}
-          price={prop.price || 0}
-          city={prop.city || "Unknown"}
-          image={prop.image || "https://via.placeholder.com/400"}
-        />
+      {listings.map((listing) => (
+        <ListingCard key={listing._id} listing={{
+          _id: listing._id,
+          title: listing.title,
+          image: listing.image,
+          price: listing.price,
+          location: listing.city || "Unknown"
+        }} />
       ))}
     </div>
   );

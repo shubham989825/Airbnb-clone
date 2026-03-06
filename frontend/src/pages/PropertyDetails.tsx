@@ -1,5 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import ReviewList from "../components/ReviewList";
+import ReviewForm from "../components/ReviewForm";
 import "../styles/PropertyDetails.css";
 
 interface Property {
@@ -52,6 +54,13 @@ const PropertyDetails = () => {
           <button className="book-button">Book Now</button>
         </div>
       </div>
+      <div className="reviews-section">
+
+  <ReviewForm listingId={property._id} />
+
+  <ReviewList listingId={property._id} />
+
+</div>
     </div>
   );
 };

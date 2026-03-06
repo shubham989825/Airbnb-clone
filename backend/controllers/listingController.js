@@ -20,3 +20,16 @@ export const getAllListings = async (req, res) => {
         res.status(500).json({message: error.message});
     }
 };
+export const getListingById = async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found" });
+    }
+
+    res.json(listing);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
