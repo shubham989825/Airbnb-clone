@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ReviewList from "../components/ReviewList";
 import ReviewForm from "../components/ReviewForm";
+import axiosInstance from "../api/axiosInstance";
 import "../styles/PropertyDetails.css";
 
 interface Property {
@@ -17,6 +18,9 @@ const PropertyDetails = () => {
   const { id } = useParams();
   const [property, setProperty] = useState<Property | null>(null);
 
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+
   useEffect(() => {
     const fetchProperty = async () => {
       try {
@@ -30,6 +34,31 @@ const PropertyDetails = () => {
 
     fetchProperty();
   }, [id]);
+ 
+  const handleBooking = async () => {
+    try {
+      if (!checkIn || !checkOut) {
+        alert("Please select dates");
+        return;
+      }
+
+      await axiosInstance.post(`/bookings/${property?._id}`, {
+        checkIn,
+        checkOut
+      });
+
+      alert("Booking successful!");
+
+    } catch (error: any) {
+      console.error(error);
+
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("Booking failed");
+      }
+    }
+  };
 
   if (!property) return <h2 className="loading-text">Loading...</h2>;
 
@@ -50,17 +79,34 @@ const PropertyDetails = () => {
           <p className="details-description">
             {property.description || "Beautiful property with amazing comfort."}
           </p>
+ 
+          <div className="booking-box">
+            <label>Check In</label>
+            <input
+              type="date"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+            />
 
-          <button className="book-button">Book Now</button>
+            <label>Check Out</label>
+            <input
+              type="date"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+            />
+
+            <button onClick={handleBooking} className="book-button">
+              Book Now
+            </button>
+          </div>
+
         </div>
       </div>
+
       <div className="reviews-section">
-
-  <ReviewForm listingId={property._id} />
-
-  <ReviewList listingId={property._id} />
-
-</div>
+        <ReviewForm listingId={property._id} />
+        <ReviewList listingId={property._id} />
+      </div>
     </div>
   );
 };

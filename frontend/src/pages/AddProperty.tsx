@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axiosInstance from "../api/axiosInstance";
-import "../styles/AddPropert.css";
+import "../styles/AddProperty.css";
 
 const AddProperty = () => {
     const [title, setTitle] = useState("");

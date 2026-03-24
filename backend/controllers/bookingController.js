@@ -3,14 +3,14 @@ import Listing from "../models/Listing.js";
 
 export const createBooking = async (req, res) => {
   try {
-    const { listingId, checkIn, checkOut } = req.body;
+    const { checkIn, checkOut } = req.body;
+    const { listingId } = req.params;
 
     const listing = await Listing.findById(listingId);
     if (!listing) {
       return res.status(404).json({ message: "Listing not found" });
     }
 
-    // Check for date conflict
     const conflictingBooking = await Booking.findOne({
       listing: listingId,
       checkIn: { $lt: new Date(checkOut) },
@@ -35,6 +35,17 @@ export const createBooking = async (req, res) => {
     });
 
     res.status(201).json(booking);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const getUserBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ user: req.user._id })
+      .populate("listing");
+
+    res.json(bookings);
 
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -16,6 +16,7 @@ const ReviewForm = ({ listingId }: { listingId: string }) => {
       });
 
       alert("Review added!");
+window.location.reload();
 
       setComment("");
 

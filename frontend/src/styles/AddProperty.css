@@ -1,0 +1,37 @@
+.add-property {
+  padding: 30px;
+  max-width: 600px;
+  margin: auto;
+}
+
+.add-property h2 {
+  margin-bottom: 20px;
+}
+
+.add-property form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.add-property input,
+.add-property textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.add-property button {
+  background-color: #ff385c;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.add-property button:hover {
+  background-color: #e03150;
+}

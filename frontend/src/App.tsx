@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import PropertyDetails from "./pages/PropertyDetails";
 import AddProperty from "./pages/AddProperty";
+import MyBookings from "./pages/MyBookings";
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/property/:id" element={<PropertyDetails />} />
           <Route path='/add-property' element={<AddProperty />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
           </Routes>
       </main>
     </div>

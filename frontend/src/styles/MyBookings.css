@@ -1,0 +1,30 @@
+.my-bookings {
+  padding: 30px;
+}
+
+.booking-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.booking-card {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.booking-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.booking-info {
+  padding: 10px;
+}
+
+.price {
+  font-weight: bold;
+}
