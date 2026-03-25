@@ -1,30 +1,104 @@
 .my-bookings {
   padding: 30px;
+  max-width: 1100px;
+  margin: auto;
 }
 
+.my-bookings h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 28px;
+}
+
+/* Loading & Empty */
+.loading,
+.empty {
+  text-align: center;
+  font-size: 18px;
+  color: #777;
+}
+
+/* Grid */
 .booking-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
 }
 
+/* Card */
 .booking-card {
-  background: white;
-  border-radius: 10px;
+  display: flex;
+  gap: 15px;
+  background: #fff;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
 }
 
+.booking-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Image */
 .booking-card img {
-  width: 100%;
-  height: 180px;
+  width: 130px;
+  height: 100%;
   object-fit: cover;
 }
 
+/* Info */
 .booking-info {
   padding: 10px;
+  flex: 1;
 }
 
+.booking-info h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.booking-info p {
+  margin: 5px 0;
+  color: #555;
+}
+
+/* Price */
 .price {
   font-weight: bold;
+  color: #e63946;
+}
+.cancel-btn {
+  margin-top: 10px;
+  padding: 7px 12px;
+  border: none;
+  background: #e63946;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn:hover {
+  background: #c1121f;
+}
+/* Nights */
+.nights {
+  font-weight: 500;
+  color: #333;
+}
+ 
+.view-btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #1d3557;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.view-btn:hover {
+  background: #16324f;
 }

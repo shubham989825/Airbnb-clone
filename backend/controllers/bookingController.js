@@ -51,3 +51,21 @@ export const getUserBookings = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const cancelBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if(!booking) {
+      return res.status(404).json({ message: "Boooking Not Found"});
+    }
+    if(booking.user.toString() !== req.user.id) {
+      return res.status(401).json({message: "Not Authorized"});
+    }
+
+    await booking.deleteOne();
+    res.json({ message: "Booking cancelled"});
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+};

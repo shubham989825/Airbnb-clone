@@ -16,17 +16,17 @@ interface Property {
 
 const PropertyDetails = () => {
   const { id } = useParams();
-  const [property, setProperty] = useState<Property | null>(null);
 
+  const [property, setProperty] = useState<Property | null>(null);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
+  const [loading, setLoading] = useState(false);  
 
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/listings/${id}`);
-        const data = await res.json();
-        setProperty(data);
+        const res = await axiosInstance.get(`/listings/${id}`);
+        setProperty(res.data);
       } catch (error) {
         console.error(error);
       }
@@ -34,7 +34,7 @@ const PropertyDetails = () => {
 
     fetchProperty();
   }, [id]);
- 
+
   const handleBooking = async () => {
     try {
       if (!checkIn || !checkOut) {
@@ -42,21 +42,27 @@ const PropertyDetails = () => {
         return;
       }
 
+      if (new Date(checkOut) <= new Date(checkIn)) {
+        alert("Check-out must be after check-in");
+        return;
+      }
+
+      setLoading(true);
+
       await axiosInstance.post(`/bookings/${property?._id}`, {
         checkIn,
-        checkOut
+        checkOut,
       });
 
-      alert("Booking successful!");
+      alert("Booking successful 🎉");
+
+      setCheckIn("");
+      setCheckOut("");
 
     } catch (error: any) {
-      console.error(error);
-
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert("Booking failed");
-      }
+      alert(error.response?.data?.message || "Booking failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,12 +80,12 @@ const PropertyDetails = () => {
         <div className="details-info">
           <h1 className="details-title">{property.title}</h1>
           <p className="details-city">{property.city}</p>
-          <p className="details-price">${property.price} / night</p>
+          <p className="details-price">₹{property.price} / night</p>
 
           <p className="details-description">
             {property.description || "Beautiful property with amazing comfort."}
           </p>
- 
+
           <div className="booking-box">
             <label>Check In</label>
             <input
@@ -95,11 +101,14 @@ const PropertyDetails = () => {
               onChange={(e) => setCheckOut(e.target.value)}
             />
 
-            <button onClick={handleBooking} className="book-button">
-              Book Now
+            <button
+              onClick={handleBooking}
+              className="book-button"
+              disabled={loading}
+            >
+              {loading ? "Booking..." : "Book Now"}
             </button>
           </div>
-
         </div>
       </div>
 
