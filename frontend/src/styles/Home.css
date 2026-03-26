@@ -3,6 +3,8 @@
   grid-template-columns: repeat(1, 1fr);
   gap: 1.5rem;
   padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 @media (min-width: 640px) {
@@ -27,4 +29,23 @@
   text-align: center;
   margin-top: 4rem;
   font-size: 1.25rem;
+  color: #717171;
+}
+
+/* Ensure images cover properly */
+.home-grid .listing-card img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.home-grid .listing-card:hover img {
+  transform: scale(1.02);
+}
+
+@media (max-width: 640px) {
+  .home-grid .listing-card img {
+    height: 220px;
+  }
 }

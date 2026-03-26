@@ -7,8 +7,8 @@ interface Listing {
   _id: string;
   title: string;
   price: number;
-  city?: string;
-  image: string;
+  location: string;
+  images: string[];
 }
 
 const Home = () => {
@@ -38,9 +38,9 @@ const Home = () => {
         <ListingCard key={listing._id} listing={{
           _id: listing._id,
           title: listing.title,
-          image: listing.image,
+          images: listing.images,
           price: listing.price,
-          location: listing.city || "Unknown"
+          location: listing.location
         }} />
       ))}
     </div>

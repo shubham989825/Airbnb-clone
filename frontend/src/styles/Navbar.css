@@ -12,6 +12,11 @@
   font-weight: bold;
   text-decoration: none;
   color: #1a202c;
+  transition: color 0.3s ease;
+}
+
+.navbar-logo:hover {
+  color: #ff5a5f;
 }
 
 .navbar-links {
@@ -28,10 +33,12 @@
   border: 2px solid #ff5a5f;
   font-weight: 500;
   display: inline-block;
+  transition: all 0.3s ease;
 }
 
 .navbar-button:hover {
   background-color: #1a202c;
   border-color: #1a202c;
   color: #fff;
+  transform: translateY(-1px);
 }

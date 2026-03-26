@@ -1,37 +1,68 @@
-.add-property {
-  padding: 30px;
-  max-width: 600px;
-  margin: auto;
+.add-property-page {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.add-property h2 {
-  margin-bottom: 20px;
+.add-property-page h2 {
+  margin-bottom: 2rem;
+  color: #222222;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
-.add-property form {
+.add-property-form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 1.5rem;
 }
 
-.add-property input,
-.add-property textarea {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
+.add-property-form input,
+.add-property-form textarea,
+.add-property-form select {
+  padding: 0.875rem;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
 }
 
-.add-property button {
-  background-color: #ff385c;
+.add-property-form input:focus,
+.add-property-form textarea:focus,
+.add-property-form select:focus {
+  outline: none;
+  border-color: #ff5a5f;
+  box-shadow: 0 0 0 2px rgba(255, 90, 95, 0.2);
+}
+
+.add-property-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.add-property-form button {
+  background-color: #ff5a5f;
   color: white;
-  padding: 12px;
+  padding: 1rem 2rem;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
 }
 
-.add-property button:hover {
+.add-property-form button:hover {
   background-color: #e03150;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 90, 95, 0.3);
+}
+
+.add-property-form button:active {
+  transform: translateY(0);
 }
