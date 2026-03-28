@@ -17,10 +17,18 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 3
     },
-    role: {
+    bio: {
         type: String,
-        enum: ['user','host'],
-        default: 'user'
+        default: ""
+    },
+    isHost: {
+        type: Boolean,
+        default: false
+    },
+    verificationStatus: {
+        type: String,
+        enum: ['pending', 'verified', 'rejected'],
+        default: 'pending'
     },
     avatar: {
         type: String,

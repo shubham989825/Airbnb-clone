@@ -1,5 +1,6 @@
 import {Link} from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axiosInstance from "../api/axiosInstance";
 
 interface ListingProps {
     listing: {
@@ -14,9 +15,61 @@ interface ListingProps {
 const ListingCard = ({ listing }: ListingProps) => {
     const [isLiked, setIsLiked] = useState(false);
     
-    const toggleLike = (e: React.MouseEvent) => {
+    useEffect(() => {
+        // Check if property is in wishlist
+        const checkWishlist = async () => {
+            try {
+                const res = await axiosInstance.get(`/api/wishlist/check/${listing._id}`);
+                setIsLiked(res.data.isInWishlist);
+            } catch (error) {
+                // Fallback to localStorage
+                const savedWishlist = localStorage.getItem("wishlist");
+                if (savedWishlist) {
+                    const wishlistIds = JSON.parse(savedWishlist);
+                    setIsLiked(wishlistIds.includes(listing._id));
+                }
+            }
+        };
+        checkWishlist();
+    }, [listing._id]);
+
+    const toggleLike = async (e: React.MouseEvent) => {
         e.preventDefault();
-        setIsLiked(!isLiked);
+        console.log("=== LIKE BUTTON CLICKED ===");
+        console.log("Listing ID:", listing._id);
+        console.log("Current isLiked state:", isLiked);
+        
+        try {
+            if (isLiked) {
+                console.log("Attempting to REMOVE from wishlist...");
+                // Remove from wishlist
+                await axiosInstance.delete(`/api/wishlist/${listing._id}`);
+                console.log("Successfully removed via API");
+                setIsLiked(false);
+            } else {
+                console.log("Attempting to ADD to wishlist...");
+                // Add to wishlist
+                await axiosInstance.post(`/api/wishlist/${listing._id}`);
+                console.log("Successfully added via API");
+                setIsLiked(true);
+            }
+        } catch (error) {
+            console.error("API call failed, using localStorage fallback:", error);
+            // Fallback to localStorage
+            const savedWishlist = localStorage.getItem("wishlist");
+            let wishlistIds = savedWishlist ? JSON.parse(savedWishlist) : [];
+            
+            if (isLiked) {
+                wishlistIds = wishlistIds.filter((id: string) => id !== listing._id);
+                console.log("Removed via localStorage");
+            } else {
+                wishlistIds.push(listing._id);
+                console.log("Added via localStorage");
+            }
+            
+            localStorage.setItem("wishlist", JSON.stringify(wishlistIds));
+            setIsLiked(!isLiked);
+        }
     };
 
     // Get first image from array or use fallback
@@ -33,6 +86,7 @@ const ListingCard = ({ listing }: ListingProps) => {
                 <button 
                     className={`listing-heart ${isLiked ? 'liked' : ''}`}
                     onClick={toggleLike}
+                    title={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
                 >
                     {isLiked ? '❤️' : '🤍'}
                 </button>

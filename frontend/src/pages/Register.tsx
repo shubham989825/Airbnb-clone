@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axiosInstance from "../api/axiosInstance";
 import "../styles/Login.css";
 
 const Register = () => {
@@ -12,26 +13,20 @@ const Register = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        localStorage.setItem("token", data.token);
+      const res = await axiosInstance.post("/auth/register", { name, email, password });
+      
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        // Store user data for profile
+        localStorage.setItem("user", JSON.stringify(res.data.user));
         alert("Registration successful");
         navigate("/");
       } else {
-        alert(data.message);
+        alert(res.data.message || "Registration failed");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Something went wrong");
+      alert(error.response?.data?.message || "Something went wrong");
     }
   };
 

@@ -29,6 +29,7 @@ const Navbar = () => {
         
         {token ? (
           <>
+            <Link to="/wishlist" className="navbar-button">❤️ Wishlist</Link>
             <Link to="/add-property" className="navbar-button">➕ Add Property</Link>
             <Link to="/profile" className="navbar-button">👤 Profile</Link>
             <button onClick={handleLogout} className="navbar-button">🚪 Logout</button>
