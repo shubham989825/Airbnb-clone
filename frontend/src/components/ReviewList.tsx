@@ -42,4 +42,4 @@ const ReviewList = ({listingId}: {listingId: string}) => {
   );
 };
 
-export default ReviewList;
+export default ReviewList;export default ReviewList;
