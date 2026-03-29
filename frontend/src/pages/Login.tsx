@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axiosInstance from "../api/axiosInstance";
 import "../styles/Login.css";
 
 const Login = () => {
@@ -9,40 +10,32 @@ const Login = () => {
   const [password, setPassword] = useState("");
 
 const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const res = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-       
-      localStorage.setItem("token", data.token);
-
-      alert("Login successful");
-      navigate("/");
-
-    } else {
-      alert(data.message);
+    try {
+      const res = await axiosInstance.post("/auth/login", { email, password });
+      
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        
+        // Store user data for profile
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        
+        alert("Login successful");
+        navigate("/");
+      } else {
+        alert(res.data.message || "Login failed");
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+      alert(error.response?.data?.message || error.message || "Something went wrong");
     }
-
-  } catch (error) {
-    console.error(error);
-    alert("Something went wrong");
-  }
-};
+  };
 
   return (
     <div className="login-page">
       <div className="login-card">
-        <h2 className="login-title">Welcome Back 👋</h2>
+        <h2 className="login-title">Welcome Back! 👋</h2>
 
         <form className="login-form" onSubmit={handleLogin}>
           <input
