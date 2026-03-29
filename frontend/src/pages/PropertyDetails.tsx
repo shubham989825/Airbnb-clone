@@ -120,4 +120,4 @@ const PropertyDetails = () => {
   );
 };
 
-export default PropertyDetails;
+export default PropertyDetails;export default PropertyDetails;
