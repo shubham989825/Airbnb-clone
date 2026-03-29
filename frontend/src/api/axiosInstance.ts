@@ -1,9 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? "https://airbnb-clone-hz9q.onrender.com/api"
-    : "http://localhost:5000/api",
+  baseURL: "https://airbnb-clone-hz9q.onrender.com/api",
 });
 
 axiosInstance.interceptors.request.use(
