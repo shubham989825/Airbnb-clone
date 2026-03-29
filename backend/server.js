@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://airbnb-clone-hcogtmj1x-shubham-thakurs-projects-d475b917.vercel.app' 
+    ? true 
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
