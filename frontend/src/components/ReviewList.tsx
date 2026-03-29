@@ -10,36 +10,44 @@ interface Review {
     };
 }
 
-const ReviewList = ({listingId}: {listingId: string}) => {
+const ReviewList = ({ listingId }: { listingId: string }) => {
     const [reviews, setReviews] = useState<Review[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchReviews = async () => {
             try {
                 const res = await axiosInstance.get(`/reviews/${listingId}`);
                 setReviews(res.data);
-            } catch(error) {
+            } catch (error) {
                 console.error(error);
+            } finally {
+                setLoading(false);
             }
         };
+
         fetchReviews();
     }, [listingId]);
 
+    if (loading) return <div>Loading reviews...</div>;
+
     return (
-    <div>
-      <h3>Reviews</h3>
-
-      {reviews.length === 0 && <p>No reviews yet</p>}
-
-      {reviews.map((review) => (
-        <div key={review._id} className="review-card">
-          <h4>{review.user.name}</h4>
-          <p>⭐ {review.rating} / 5</p>
-          <p>{review.comment}</p>
+        <div className="review-list">
+            {reviews.length === 0 ? (
+                <p>No reviews yet</p>
+            ) : (
+                reviews.map((review) => (
+                    <div key={review._id} className="review-item">
+                        <h4>{review.user.name}</h4>
+                        <div className="rating">
+                            {"⭐".repeat(review.rating)}
+                        </div>
+                        <p>{review.comment}</p>
+                    </div>
+                ))
+            )}
         </div>
-      ))}
-    </div>
-  );
+    );
 };
 
-export default ReviewList;export default ReviewList;
+export default ReviewList;

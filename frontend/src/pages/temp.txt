@@ -10,7 +10,7 @@ interface Property {
   title: string;
   price: number;
   city: string;
-  images: string[];
+  image: string;
   description?: string;
 }
 
@@ -59,65 +59,62 @@ const PropertyDetails = () => {
       setCheckIn("");
       setCheckOut("");
 
-    } catch (error) {
-      console.error(error);
-      alert("Booking failed");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Booking failed");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!property) return <div>Loading...</div>;
+  if (!property) return <h2 className="loading-text">Loading...</h2>;
 
   return (
     <div className="details-page">
       <div className="details-container">
         <img
-          src={property.images && property.images.length > 0 ? property.images[0] : 'https://picsum.photos/seed/property-detail/800/600.jpg'}
+          src={property.image}
           alt={property.title}
           className="details-image"
         />
 
         <div className="details-info">
           <h1 className="details-title">{property.title}</h1>
-          <p className="details-city">📍 {property.city}</p>
-          <p className="details-price">💰 ₹{property.price.toLocaleString()}/night</p>
-          
-          {property.description && (
-            <p className="details-description">{property.description}</p>
-          )}
+          <p className="details-city">{property.city}</p>
+          <p className="details-price">₹{property.price} / night</p>
 
-          {/* 🔥 Booking Box */}
+          <p className="details-description">
+            {property.description || "Beautiful property with amazing comfort."}
+          </p>
+
           <div className="booking-box">
-            <label>Check-in:</label>
+            <label>Check In</label>
             <input
               type="date"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
             />
 
-            <label>Check-out:</label>
+            <label>Check Out</label>
             <input
               type="date"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
             />
 
-            <button 
-              className="book-button" 
+            <button
               onClick={handleBooking}
+              className="book-button"
               disabled={loading}
             >
               {loading ? "Booking..." : "Book Now"}
             </button>
           </div>
-
-          {/* 🔥 Reviews Section */}
-          <div className="reviews-section">
-            <ReviewForm listingId={property._id} />
-            <ReviewList listingId={property._id} />
-          </div>
         </div>
+      </div>
+
+      <div className="reviews-section">
+        <ReviewForm listingId={property._id} />
+        <ReviewList listingId={property._id} />
       </div>
     </div>
   );
