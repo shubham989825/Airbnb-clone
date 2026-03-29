@@ -19,7 +19,7 @@ const ListingCard = ({ listing }: ListingProps) => {
         // Check if property is in wishlist
         const checkWishlist = async () => {
             try {
-                const res = await axiosInstance.get(`/api/wishlist/check/${listing._id}`);
+                const res = await axiosInstance.get(`/wishlist/check/${listing._id}`);
                 setIsLiked(res.data.isInWishlist);
             } catch (error) {
                 // Fallback to localStorage
@@ -43,13 +43,13 @@ const ListingCard = ({ listing }: ListingProps) => {
             if (isLiked) {
                 console.log("Attempting to REMOVE from wishlist...");
                 // Remove from wishlist
-                await axiosInstance.delete(`/api/wishlist/${listing._id}`);
+                await axiosInstance.delete(`/wishlist/${listing._id}`);
                 console.log("Successfully removed via API");
                 setIsLiked(false);
             } else {
                 console.log("Attempting to ADD to wishlist...");
                 // Add to wishlist
-                await axiosInstance.post(`/api/wishlist/${listing._id}`);
+                await axiosInstance.post(`/wishlist/${listing._id}`);
                 console.log("Successfully added via API");
                 setIsLiked(true);
             }

@@ -47,17 +47,22 @@ const Profile = () => {
   useEffect(() => {
     // First check if user data exists in localStorage
     const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      console.log("Found user data in localStorage:", userData);
-      setUser(userData);
-      setFormData({
-        name: userData.name || "",
-        email: userData.email || "",
-        bio: userData.bio || ""
-      });
-      setLoading(false);
-      return;
+    if (savedUser && savedUser !== "undefined") {
+      try {
+        const userData = JSON.parse(savedUser);
+        console.log("Found user data in localStorage:", userData);
+        setUser(userData);
+        setFormData({
+          name: userData.name || "",
+          email: userData.email || "",
+          bio: userData.bio || ""
+        });
+        setLoading(false);
+        return;
+      } catch (parseError) {
+        console.error("Error parsing initial localStorage user data:", parseError);
+        localStorage.removeItem("user");
+      }
     }
 
     const fetchProfileData = async () => {
@@ -86,7 +91,7 @@ const Profile = () => {
         }
 
         // Fetch user's bookings
-        const bookingsRes = await axiosInstance.get("/api/profile/bookings");
+        const bookingsRes = await axiosInstance.get("/profile/bookings");
         console.log("Bookings response:", bookingsRes.data);
         if (bookingsRes.data) {
           setBookings(bookingsRes.data);
@@ -94,7 +99,7 @@ const Profile = () => {
 
         // Fetch user's listings (if host)
         try {
-          const listingsRes = await axiosInstance.get("/api/profile/listings");
+          const listingsRes = await axiosInstance.get("/profile/listings");
           console.log("Listings response:", listingsRes.data);
           if (listingsRes.data) {
             setListings(listingsRes.data);
@@ -109,15 +114,21 @@ const Profile = () => {
         
         // If API fails, try to use localStorage user data
         const savedUser = localStorage.getItem("user");
-        if (savedUser) {
-          const userData = JSON.parse(savedUser);
-          console.log("Using localStorage user data:", userData);
-          setUser(userData);
-          setFormData({
-            name: userData.name || "",
-            email: userData.email || "",
-            bio: userData.bio || ""
-          });
+        if (savedUser && savedUser !== "undefined") {
+          try {
+            const userData = JSON.parse(savedUser);
+            console.log("Using localStorage user data:", userData);
+            setUser(userData);
+            setFormData({
+              name: userData.name || "",
+              email: userData.email || "",
+              bio: userData.bio || ""
+            });
+          } catch (parseError) {
+            console.error("Error parsing localStorage user data:", parseError);
+            // Clear invalid data
+            localStorage.removeItem("user");
+          }
           
           // Try to get bookings from localStorage or set empty
           const savedBookings = localStorage.getItem("bookings");
