@@ -1,7 +1,9 @@
 {
   "version": 2,
-  "builds": {
-    "src": "frontend"
-  },
+  "builds": [
+    {
+      "src": "frontend"
+    }
+  ],
   "buildCommand": "npm run build"
 }
