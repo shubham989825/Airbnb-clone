@@ -75,7 +75,7 @@ const Home = () => {
     setFilteredListings(filtered);
   };
 
-  if (loading) return <p className="home-loading">Loading properties...</p>;
+  if (loading) return <p className="home-loading">Loading properties... {new Date().toISOString()}</p>;
 
   return (
     <div>
