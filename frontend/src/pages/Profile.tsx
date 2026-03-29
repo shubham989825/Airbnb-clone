@@ -417,97 +417,61 @@ const Profile = () => {
 
 
       {/* Edit Profile Form */}
-
       {editing && (
-
         <div className="edit-profile-modal">
-
           <div className="modal-content">
-
             <h2>Edit Profile</h2>
-
             <form onSubmit={handleUpdateProfile} className="edit-form">
-
               <div className="form-group">
-
                 <label>Name</label>
-
                 <input
-
                   type="text"
-
                   value={formData.name}
-
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-
                   required
-
                 />
-
               </div>
-
               <div className="form-group">
-
                 <label>Email</label>
-
                 <input
-
                   type="email"
-
                   value={formData.email}
-
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-
                   required
-
                 />
-
               </div>
-
               <div className="form-group">
-
                 <label>Bio</label>
-
                 <textarea
-
                   value={formData.bio}
-
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-
-                  placeholder="Tell us about yourself..."
-
                   rows={4}
-
+                  placeholder="Tell us about yourself..."
                 />
-
               </div>
-
               <div className="form-actions">
-
-                <button type="submit" className="save-btn">💾 Save Changes</button>
-
-                <button 
-
-                  type="button" 
-
-                  onClick={() => setEditing(false)}
-
-                  className="cancel-btn"
-
-                >
-
-                  ❌ Cancel
-
+                <button type="submit" className="save-btn">
+                  Save Changes
                 </button>
-
+                <button type="button" onClick={() => setEditing(false)} className="cancel-btn">
+                  Cancel
+                </button>
               </div>
-
             </form>
-
           </div>
-
         </div>
+      )}
 
+      {/* Profile Overview */}
+      {!editing && user && (
+        <div className="profile-overview">
+          <div className="overview-section">
+            <h3>Account Overview</h3>
+            <p>Member since: {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Unknown"}</p>
+            <p>Status: {user?.verificationStatus === "verified" ? "✅ Verified" : "⏳ Pending Verification"}</p>
+            <p>Host Status: {user?.isHost ? "🌟 Superhost" : "👤 Guest"}</p>
+          </div>
+        </div>
       )}
 
 
