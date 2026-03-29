@@ -91,6 +91,20 @@ const Profile = () => {
 
 
   useEffect(() => {
+    // First check if user data exists in localStorage
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      console.log("Found user data in localStorage:", userData);
+      setUser(userData);
+      setFormData({
+        name: userData.name || "",
+        email: userData.email || "",
+        bio: userData.bio || ""
+      });
+      setLoading(false);
+      return;
+    }
 
     const fetchProfileData = async () => {
 
