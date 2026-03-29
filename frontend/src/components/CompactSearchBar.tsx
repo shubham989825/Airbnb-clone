@@ -8,7 +8,11 @@ interface SearchFilters {
   guests: string;
 }
 
-const CompactSearchBar = () => {
+interface CompactSearchBarProps {
+  onSearch: (filters: SearchFilters) => void;
+}
+
+const CompactSearchBar = ({ onSearch }: CompactSearchBarProps) => {
   const [filters, setFilters] = useState<SearchFilters>({
     location: "",
     priceRange: "",
@@ -18,6 +22,7 @@ const CompactSearchBar = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    onSearch(filters);
     const queryParams = new URLSearchParams();
     
     if (filters.location) {
