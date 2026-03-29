@@ -121,20 +121,22 @@ const Profile = () => {
         const userRes = await axiosInstance.get("/api/profile/profile");
 
         console.log("Profile response:", userRes.data);
+        
+        if (userRes.data && userRes.data.user) {
 
-        setUser(userRes.data.user);
+          setUser(userRes.data.user);
 
-        setFormData({
+          setFormData({
 
-          name: userRes.data.user.name || "",
+            name: userRes.data.user.name || "",
 
-          email: userRes.data.user.email || "",
+            email: userRes.data.user.email || "",
 
-          bio: userRes.data.user.bio || ""
+            bio: userRes.data.user.bio || ""
 
-        });
+          });
 
-
+        }
 
         // Fetch user's bookings
 
@@ -142,9 +144,11 @@ const Profile = () => {
 
         console.log("Bookings response:", bookingsRes.data);
 
-        setBookings(bookingsRes.data);
+        if (bookingsRes.data) {
 
+          setBookings(bookingsRes.data);
 
+        }
 
         // Fetch user's listings (if host)
 
@@ -154,7 +158,11 @@ const Profile = () => {
 
           console.log("Listings response:", listingsRes.data);
 
-          setListings(listingsRes.data);
+          if (listingsRes.data) {
+
+            setListings(listingsRes.data);
+
+          }
 
         } catch (error) {
 
@@ -169,9 +177,7 @@ const Profile = () => {
       } catch (error) {
 
         console.error("Error fetching profile from API:", error);
-
         
-
         // If API fails, try to use localStorage user data
 
         const savedUser = localStorage.getItem("user");
@@ -193,37 +199,43 @@ const Profile = () => {
             bio: userData.bio || ""
 
           });
+          
+          // Try to get bookings from localStorage or set empty
+
+          const savedBookings = localStorage.getItem("bookings");
+
+          if (savedBookings) {
+
+            setBookings(JSON.parse(savedBookings));
+
+          } else {
+
+            setBookings([]);
+
+          }
+          
+          setListings([]);
 
         } else {
 
-          // If no user data anywhere, show mock data for testing
+          // No user data available
 
-          console.log("No user data found, showing mock profile");
-
-          setUser({
-
+          console.error("No user data available");
+          
+          // Set mock user data for display
+          const mockUser: User = {
             _id: "mock123",
-
             name: "Test User",
-
             email: "test@example.com",
-
             createdAt: new Date().toISOString(),
-
             isHost: false,
-
             verificationStatus: "pending"
-
-          });
-
+          };
+          setUser(mockUser);
           setFormData({
-
             name: "Test User",
-
             email: "test@example.com",
-
             bio: "Test bio"
-
           });
 
         }
