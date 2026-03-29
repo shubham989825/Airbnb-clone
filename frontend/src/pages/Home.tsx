@@ -30,11 +30,13 @@ const Home = () => {
   useEffect(() => {
     const fetchListings = async () => {
       try {
+        console.log("Fetching listings from:", "/listings");
         const res = await axiosInstance.get("/listings");
+        console.log("API response:", res.data);
         setListings(res.data);
         setFilteredListings(res.data);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching listings:", err);
       } finally {
         setLoading(false);
       }
