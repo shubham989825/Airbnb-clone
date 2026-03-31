@@ -42,7 +42,7 @@ window.location.reload();
         <option value={1}>1 ⭐</option>
       </select>
 
-      <textarea
+      <textarea className="review-box"
         placeholder="Write your review..."
         value={comment}
         onChange={(e) => setComment(e.target.value)}

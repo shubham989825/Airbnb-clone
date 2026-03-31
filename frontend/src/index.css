@@ -37,3 +37,8 @@ body {
   --airbnb-background: #f7f7f7;
   --airbnb-white: #ffffff;
 }
+
+/* Tailwind CSS imports */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

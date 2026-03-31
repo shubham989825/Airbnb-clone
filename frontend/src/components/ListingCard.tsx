@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
+import "../styles/ListingCard.css";
 
 interface ListingProps {
     listing: {
@@ -69,93 +70,45 @@ const ListingCard = ({ listing }: ListingProps) => {
         : 'https://picsum.photos/seed/placeholder/800/600.jpg';
 
     return (
-        <div className="listing-card">
-            <Link to={`/property/${listing._id}`}>
-                <div className="listing-image-container">
+        <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl hover:shadow-3xl transition-all duration-500 cursor-pointer border border-gray-200 relative overflow-hidden transform hover:-translate-y-2 hover:scale-105">
+            <Link to={`/property/${listing._id}`} className="no-underline">
+                <div className="relative h-64 overflow-hidden">
                     <img 
                         src={imageUrl} 
                         alt={listing.title}
-                        className="listing-image"
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                         onLoad={() => setImageLoaded(true)}
                         onError={() => setImageError(true)}
                         style={{ 
                             opacity: imageLoaded ? 1 : 0.7,
-                            transition: 'opacity 0.3s ease-in-out'
+                            transition: 'opacity 0.3s ease'
                         }}
                     />
-                    {!imageLoaded && !imageError && (
-                        <div className="image-skeleton">
-                            <div className="skeleton-shimmer"></div>
-                        </div>
-                    )}
-                    {imageError && (
-                        <div className="image-error">
-                            <span>📷</span>
-                        </div>
-                    )}
                     <button 
-                        className={`listing-heart ${isLiked ? 'liked' : ''}`}
+                        className={`absolute top-3 right-3 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 z-10 backdrop-blur-md ${
+                            isLiked 
+                                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg hover:shadow-xl hover:scale-110' 
+                                : 'bg-white/90 text-gray-600 shadow-md hover:shadow-lg hover:bg-white hover:scale-110'
+                        }`}
                         onClick={toggleLike}
-                        title={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
                     >
-                        <span className="heart-icon">
-                            {isLiked ? '❤️' : '🤍'}
-                        </span>
-                        <span className="heart-pulse"></span>
+                        <span className="text-xl">{isLiked ? '❤️' : '🤍'}</span>
                     </button>
                 </div>
 
-                <div className="listing-content">
-                    <div className="listing-header">
-                        <h3 className="listing-title">{listing.title}</h3>
-                        <div className="listing-badges">
-                            <span className="listing-badge superhost">🌟 Superhost</span>
-                            <span className="listing-badge rating">
-                                <span className="star">⭐</span>
-                                <span className="rating-number">4.8</span>
-                                <span className="rating-count">(25)</span>
-                            </span>
-                        </div>
+                <div className="p-6 bg-gradient-to-b from-white to-gray-50/80">
+                    <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-xl font-bold text-black flex-1 leading-tight no-underline">{listing.title}</h3>
                     </div>
                     
-                    <p className="listing-location">
-                        <span className="location-icon">📍</span>
-                        {listing.location}
-                    </p>
-                    
-                    <div className="listing-features">
-                        <div className="feature">
-                            <span className="feature-icon">🏠</span>
-                            <span className="feature-text">Entire home</span>
-                        </div>
-                        <div className="feature">
-                            <span className="feature-icon">👥</span>
-                            <span className="feature-text">4 guests</span>
-                        </div>
-                        <div className="feature">
-                            <span className="feature-icon">🛏</span>
-                            <span className="feature-text">2 bedrooms</span>
-                        </div>
-                        <div className="feature">
-                            <span className="feature-icon">🚿</span>
-                            <span className="feature-text">2 baths</span>
-                        </div>
+                    <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200">
+                        <span className="text-lg">📍</span>
+                        <span className="text-sm font-medium text-black">{listing.location}</span>
                     </div>
                     
-                    <div className="listing-price-section">
-                        <div className="price-container">
-                            <span className="price-label">Price</span>
-                            <div className="price-row">
-                                <span className="listing-price">₹{listing.price.toLocaleString()}</span>
-                                <span className="price-unit">/ night</span>
-                            </div>
-                        </div>
-                        <div className="price-comparison">
-                            <span className="comparison-label">Great value</span>
-                            <div className="comparison-bar">
-                                <div className="comparison-fill"></div>
-                            </div>
-                        </div>
+                    <div className="flex items-baseline gap-2 p-4 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl border border-rose-100">
+                        <span className="text-2xl font-bold text-black">₹{listing.price.toLocaleString()}</span>
+                        <span className="text-sm font-medium text-black">/ night</span>
                     </div>
                 </div>
             </Link>
