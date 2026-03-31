@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import logo from "../assets/air logo.jpeg";
 import "../styles/Navbar.css";
 
 const Navbar = () => {
@@ -19,7 +20,7 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <Link to="/" className="navbar-logo">
-        🏠 Airbnb Clone
+         <img src={logo} alt="Airbnb logo" className="logo-img" />
       </Link>
       <div className="navbar-links">
         {/* Show Home button only when not on home page */}
