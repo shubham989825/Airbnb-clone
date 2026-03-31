@@ -122,18 +122,6 @@ JWT_SECRET=your_secret_key
 * 💳 Payment integration
 * 🔔 Notifications system
 
----
-
-## 🐞 Known Issues
-
-* Wishlist API returning 404 error (fix in progress)
-* Review feature not yet implemented
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to fork this repo and submit a pull request.
 
 ---
 
