@@ -6,9 +6,9 @@
 
 .details-header {
   background: white;
-  padding: 20px 0;
+  padding: 15px 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .header-content {
@@ -48,12 +48,13 @@
 .image-gallery {
   position: relative;
   background: white;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
+  margin-top: 5px;
 }
 
 .main-image {

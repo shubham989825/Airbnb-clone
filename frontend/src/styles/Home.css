@@ -3,8 +3,11 @@
   grid-template-columns: repeat(1, 1fr);
   gap: 1.5rem;
   padding: 1.5rem;
+  padding-left: 4rem;
+  padding-right: 4rem;
   max-width: 1200px;
   margin: 0 auto;
+  border-style: transparent;
 }
 
 @media (min-width: 640px) {

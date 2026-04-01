@@ -16,7 +16,6 @@ interface ListingProps {
 const ListingCard = ({ listing }: ListingProps) => {
     const [isLiked, setIsLiked] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [imageError, setImageError] = useState(false);
     
     useEffect(() => {
         // Check if property is in wishlist
@@ -24,7 +23,7 @@ const ListingCard = ({ listing }: ListingProps) => {
             try {
                 const res = await axiosInstance.get(`/wishlist/check/${listing._id}`);
                 setIsLiked(res.data.isInWishlist);
-            } catch (error) {
+            } catch (_error) {
                 // Fallback to localStorage
                 const savedWishlist = localStorage.getItem("wishlist");
                 if (savedWishlist) {
@@ -38,6 +37,7 @@ const ListingCard = ({ listing }: ListingProps) => {
 
     const toggleLike = async (e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         
         try {
             if (isLiked) {
@@ -49,7 +49,7 @@ const ListingCard = ({ listing }: ListingProps) => {
                 await axiosInstance.post(`/wishlist/${listing._id}`);
                 setIsLiked(true);
             }
-        } catch (error) {
+        } catch (_error) {
             // Fallback to localStorage
             const savedWishlist = localStorage.getItem("wishlist");
             let wishlistIds = savedWishlist ? JSON.parse(savedWishlist) : [];
@@ -70,45 +70,65 @@ const ListingCard = ({ listing }: ListingProps) => {
         : 'https://picsum.photos/seed/placeholder/800/600.jpg';
 
     return (
-        <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl hover:shadow-3xl transition-all duration-500 cursor-pointer border border-gray-200 relative overflow-hidden transform hover:-translate-y-2 hover:scale-105">
-            <Link to={`/property/${listing._id}`} className="no-underline">
-                <div className="relative h-64 overflow-hidden">
-                    <img 
-                        src={imageUrl} 
+        <div className="listing-card-container">
+            <Link to={`/property/${listing._id}`} className="listing-card-link">
+                {/* IMAGE */}
+                <div className="listing-image-container">
+                    <img
+                        src={imageUrl}
                         alt={listing.title}
-                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                        className="listing-image"
                         onLoad={() => setImageLoaded(true)}
-                        onError={() => setImageError(true)}
-                        style={{ 
+                        style={{
                             opacity: imageLoaded ? 1 : 0.7,
-                            transition: 'opacity 0.3s ease'
+                            transition: "opacity 0.3s ease",
                         }}
                     />
+                    
+                    {/* NEW MODERN LIKE BUTTON */}
                     <button 
-                        className={`absolute top-3 right-3 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 z-10 backdrop-blur-md ${
-                            isLiked 
-                                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg hover:shadow-xl hover:scale-110' 
-                                : 'bg-white/90 text-gray-600 shadow-md hover:shadow-lg hover:bg-white hover:scale-110'
-                        }`}
-                        onClick={toggleLike}
+                        className={`wishlist-btn ${isLiked ? 'liked' : ''}`}
+                        onClick={(e) => {
+                            e.preventDefault();   // stop Link navigation
+                            e.stopPropagation();  // prevent bubbling
+                            toggleLike(e);
+                        }}
+                        aria-label={isLiked ? "Remove from wishlist" : "Add to wishlist"}
                     >
-                        <span className="text-xl">{isLiked ? '❤️' : '🤍'}</span>
+                        <div className="heart-icon">
+                            <svg 
+                                viewBox="0 0 24 24" 
+                                className="heart-svg"
+                                fill={isLiked ? "#ff385c" : "none"}
+                                stroke={isLiked ? "#ff385c" : "#000000"}
+                                strokeWidth="2"
+                            >
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                        </div>
+                        <span className="wishlist-text">
+                            {isLiked ? 'Saved' : 'Save'}
+                        </span>
                     </button>
                 </div>
 
-                <div className="p-6 bg-gradient-to-b from-white to-gray-50/80">
-                    <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-xl font-bold text-black flex-1 leading-tight no-underline">{listing.title}</h3>
+                {/* CONTENT */}
+                <div className="listing-content">
+                    {/* TITLE */}
+                    <h3 className="listing-title">
+                        {listing.title}
+                    </h3>
+
+                    {/* LOCATION */}
+                    <div className="listing-location">
+                        <span className="location-icon">📍</span>
+                        <span className="location-text">{listing.location}</span>
                     </div>
-                    
-                    <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200">
-                        <span className="text-lg">📍</span>
-                        <span className="text-sm font-medium text-black">{listing.location}</span>
-                    </div>
-                    
-                    <div className="flex items-baseline gap-2 p-4 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl border border-rose-100">
-                        <span className="text-2xl font-bold text-black">₹{listing.price.toLocaleString()}</span>
-                        <span className="text-sm font-medium text-black">/ night</span>
+
+                    {/* PRICE */}
+                    <div className="listing-price">
+                        <span className="price-amount">₹{listing.price.toLocaleString()}</span>
+                        <span className="price-unit">/ night</span>
                     </div>
                 </div>
             </Link>
