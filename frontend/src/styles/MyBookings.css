@@ -18,6 +18,22 @@
   color: #777;
 }
 
+/* Error Message */
+.error-message {
+  background: #ffebee;
+  border: 1px solid #ef5350;
+  color: #c62828;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.error-message p {
+  margin: 0;
+}
+
 /* Grid */
 .booking-grid {
   display: grid;
