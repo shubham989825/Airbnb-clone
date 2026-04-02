@@ -89,8 +89,8 @@ const ListingCard = ({ listing }: ListingProps) => {
                     <button 
                         className={`wishlist-btn ${isLiked ? 'liked' : ''}`}
                         onClick={(e) => {
-                            e.preventDefault();   // stop Link navigation
-                            e.stopPropagation();  // prevent bubbling
+                            e.preventDefault();
+                            e.stopPropagation();    
                             toggleLike(e);
                         }}
                         aria-label={isLiked ? "Remove from wishlist" : "Add to wishlist"}
