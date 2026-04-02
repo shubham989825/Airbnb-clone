@@ -10,26 +10,32 @@ interface Review {
     };
 }
 
-const ReviewList = ({ listingId }: { listingId: string }) => {
+const ReviewList = ({ listingId, refresh }: { listingId: string; refresh?: number }) => {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchReviews = async () => {
+            setLoading(true);
+            setError(null);
             try {
                 const res = await axiosInstance.get(`/reviews/${listingId}`);
                 setReviews(res.data);
-            } catch (error) {
-                console.error(error);
+            } catch (error: any) {
+                console.error("Error fetching reviews", error);
+                setError(error?.response?.data?.message || error?.message || "Failed to load reviews");
             } finally {
                 setLoading(false);
             }
         };
 
         fetchReviews();
-    }, [listingId]);
+    }, [listingId, refresh]);
 
     if (loading) return <div>Loading reviews...</div>;
+
+    if (error) return <div className="review-error">{error}</div>;
 
     return (
         <div className="review-list">

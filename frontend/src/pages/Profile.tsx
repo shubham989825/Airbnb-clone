@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
+import MyReviews from "../components/MyReviews";
 import "../styles/Profile.css";
 
 interface User {
@@ -323,18 +324,21 @@ const Profile = () => {
         >
           ❤️ Wishlist
         </button>
+
         <button 
           className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`}
           onClick={() => setActiveTab("reviews")}
         >
-          ⭐ Reviews
+          ⭐ My Reviews
         </button>
+
         <button 
           className={`tab-btn ${activeTab === "settings" ? "active" : ""}`}
           onClick={() => setActiveTab("settings")}
         >
           ⚙️ Settings
         </button>
+
         <button 
           className={`tab-btn ${activeTab === "earnings" ? "active" : ""}`}
           onClick={() => setActiveTab("earnings")}
@@ -431,7 +435,7 @@ const Profile = () => {
         {activeTab === "reviews" && (
           <div className="reviews-content">
             <h2>My Reviews</h2>
-            <p>📝 Reviews feature coming soon! Check back later.</p>
+            <MyReviews />
           </div>
         )}
 

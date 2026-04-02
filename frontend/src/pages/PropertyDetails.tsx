@@ -30,6 +30,7 @@ const PropertyDetails = () => {
   const [checkOut, setCheckOut] = useState("");
   const [loading, setLoading] = useState(false);  
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const [reviewRefresh, setReviewRefresh] = useState(0);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -217,8 +218,8 @@ const PropertyDetails = () => {
         <div className="reviews-section">
           <h3>⭐ Guest Reviews</h3>
           <div className="reviews-container">
-            <ReviewForm listingId={property._id} />
-            <ReviewList listingId={property._id} />
+            <ReviewForm listingId={property._id} onReviewAdded={() => setReviewRefresh((prev) => prev + 1)} />
+            <ReviewList listingId={property._id} refresh={reviewRefresh} />
           </div>
         </div>
       </div>
