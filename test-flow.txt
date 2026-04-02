@@ -1,0 +1,40 @@
+COMPLETE BOOKING FLOW TEST
+==========================
+
+1. CLEAR BROWSER DATA
+   - Open DevTools (F12)
+   - Go to Application → localStorage
+   - Clear All
+   - Refresh page
+
+2. LOGIN
+   - Email: testuser1775160481503@example.com
+   - Password: TestPassword123!
+   - Click Login
+   - Check console: "✅ Login response"
+
+3. GO HOME
+   - Click Home button in navbar
+   - Browse properties
+
+4. CREATE BOOKING
+   - Click on any property
+   - Select Check-in: Apr 20, 2026
+   - Select Check-out: Apr 25, 2026
+   - Click "Book Now"
+   - See: "Booking successful! Redirecting to your Profile..."
+   - Check console: "✅ Booking created successfully!"
+
+5. VIEW BOOKINGS IN PROFILE
+   - You should be on /profile page already
+   - Click "📅 My Bookings" tab
+   - Check console: "🔄 My Bookings tab activated, fetching fresh data..."
+   - Should see: "My Bookings (1)"
+   - Should see your property with dates and price
+
+6. VERIFY IN CONSOLE
+   Look for:
+   ✅ Bookings fetched: 1
+   1. Beach House - ₹30000
+
+Expected Result: Booking appears in My Bookings section! ✅

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import MyReviews from "../components/MyReviews";
 import "../styles/Profile.css";
@@ -33,41 +34,84 @@ interface UserListing {
 }
 
 const Profile = () => {
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [listings, setListings] = useState<UserListing[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     bio: ""
   });
 
-  useEffect(() => {
-    // First check if user data exists in localStorage
-    const savedUser = localStorage.getItem("user");
-    if (savedUser && savedUser !== "undefined") {
-      try {
-        const userData = JSON.parse(savedUser);
-        console.log("Found user data in localStorage:", userData);
-        setUser(userData);
-        setFormData({
-          name: userData.name || "",
-          email: userData.email || "",
-          bio: userData.bio || ""
-        });
-        setLoading(false);
-        return;
-      } catch (parseError) {
-        console.error("Error parsing initial localStorage user data:", parseError);
-        localStorage.removeItem("user");
+  // Separate function to fetch bookings
+  const fetchBookings = useCallback(async () => {
+    console.log("📖 Fetching bookings...");
+    setBookingsLoading(true);
+    try {
+      const bookingsRes = await axiosInstance.get("/profile/bookings");
+      console.log("✅ Bookings fetched:", bookingsRes.data?.length || 0);
+      if (bookingsRes.data) {
+        setBookings(bookingsRes.data);
       }
+    } catch (error) {
+      console.error("❌ Error fetching bookings:", error);
+    } finally {
+      setBookingsLoading(false);
+    }
+  }, []);
+
+  // Delete booking function
+  const deleteBooking = async (bookingId: string) => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) {
+      return;
     }
 
+    try {
+      console.log("🗑️ Deleting booking:", bookingId);
+      await axiosInstance.delete(`/bookings/${bookingId}`);
+      console.log("✅ Booking cancelled successfully");
+      
+      alert("Booking cancelled successfully!");
+      setOpenMenu(null);
+      
+      // Refetch bookings after deletion
+      await fetchBookings();
+    } catch (error: any) {
+      console.error("❌ Error deleting booking:", error);
+      const errorMsg = error.response?.data?.message || "Failed to cancel booking";
+      alert(errorMsg);
+    }
+  };
+
+  useEffect(() => {
+    console.log("🔄 Profile component mounted, loading user data...");
+    
     const fetchProfileData = async () => {
-      // Check if token exists first
+      // First check if user data exists in localStorage
+      const savedUser = localStorage.getItem("user");
+      if (savedUser && savedUser !== "undefined") {
+        try {
+          const userData = JSON.parse(savedUser);
+          console.log("Found user data in localStorage:", userData.name);
+          setUser(userData);
+          setFormData({
+            name: userData.name || "",
+            email: userData.email || "",
+            bio: userData.bio || ""
+          });
+        } catch (parseError) {
+          console.error("Error parsing localStorage user data:", parseError);
+          localStorage.removeItem("user");
+        }
+      }
+
+      // Check if token exists
       const token = localStorage.getItem("token");
       if (!token) {
         console.log("No token found in localStorage");
@@ -75,10 +119,10 @@ const Profile = () => {
         return;
       }
 
-      console.log("Token found:", token);
+      console.log("Token found, fetching from API...");
       
       try {
-        // Try to get user data from API first
+        // Try to get user data from API
         const userRes = await axiosInstance.get("/api/profile/profile");
         console.log("Profile response:", userRes.data);
         
@@ -91,13 +135,6 @@ const Profile = () => {
           });
         }
 
-        // Fetch user's bookings
-        const bookingsRes = await axiosInstance.get("/profile/bookings");
-        console.log("Bookings response:", bookingsRes.data);
-        if (bookingsRes.data) {
-          setBookings(bookingsRes.data);
-        }
-
         // Fetch user's listings (if host)
         try {
           const listingsRes = await axiosInstance.get("/profile/listings");
@@ -106,45 +143,14 @@ const Profile = () => {
             setListings(listingsRes.data);
           }
         } catch (error) {
-          // User might not be a host
           console.log("No listings found:", error);
           setListings([]);
         }
       } catch (error) {
         console.error("Error fetching profile from API:", error);
         
-        // If API fails, try to use localStorage user data
-        const savedUser = localStorage.getItem("user");
-        if (savedUser && savedUser !== "undefined") {
-          try {
-            const userData = JSON.parse(savedUser);
-            console.log("Using localStorage user data:", userData);
-            setUser(userData);
-            setFormData({
-              name: userData.name || "",
-              email: userData.email || "",
-              bio: userData.bio || ""
-            });
-          } catch (parseError) {
-            console.error("Error parsing localStorage user data:", parseError);
-            // Clear invalid data
-            localStorage.removeItem("user");
-          }
-          
-          // Try to get bookings from localStorage or set empty
-          const savedBookings = localStorage.getItem("bookings");
-          if (savedBookings) {
-            setBookings(JSON.parse(savedBookings));
-          } else {
-            setBookings([]);
-          }
-          
-          setListings([]);
-        } else {
-          // No user data available
-          console.error("No user data available");
-          
-          // Set mock user data for display
+        // If API fails but we have localStorage user data, that's ok
+        if (!user) {
           const mockUser: User = {
             _id: "mock123",
             name: "Test User",
@@ -154,11 +160,6 @@ const Profile = () => {
             verificationStatus: "pending"
           };
           setUser(mockUser);
-          setFormData({
-            name: "Test User",
-            email: "test@example.com",
-            bio: "Test bio"
-          });
         }
       } finally {
         setLoading(false);
@@ -166,7 +167,18 @@ const Profile = () => {
     };
 
     fetchProfileData();
-  }, []);
+    
+    // Also fetch bookings immediately
+    fetchBookings();
+  }, [fetchBookings]);
+
+  // Refetch bookings when activeTab changes to "bookings"
+  useEffect(() => {
+    if (activeTab === "bookings") {
+      console.log("🔄 My Bookings tab activated, fetching fresh data...");
+      fetchBookings();
+    }
+  }, [activeTab, fetchBookings]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -374,26 +386,117 @@ const Profile = () => {
 
         {activeTab === "bookings" && (
           <div className="bookings-content">
-            <h2>My Bookings</h2>
-            {bookings.length === 0 ? (
-              <p className="no-bookings">No bookings yet</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2>My Bookings ({bookings.length})</h2>
+              <button 
+                onClick={() => fetchBookings()}
+                disabled={bookingsLoading}
+                style={{
+                  padding: '8px 16px',
+                  background: '#1d3557',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: bookingsLoading ? 'not-allowed' : 'pointer',
+                  opacity: bookingsLoading ? 0.6 : 1
+                }}
+              >
+                {bookingsLoading ? '🔄 Loading...' : '🔄 Refresh'}
+              </button>
+            </div>
+            
+            {bookingsLoading && bookings.length === 0 ? (
+              <p className="no-bookings">Loading your bookings...</p>
+            ) : bookings.length === 0 ? (
+              <p className="no-bookings">No bookings yet. Start exploring and book your next adventure! 🏖️</p>
             ) : (
               <div className="bookings-list">
-                {bookings.map((booking) => (
-                  <div key={booking._id} className="booking-card">
-                    <img 
-                      src={booking?.listing?.images?.[0] || "https://picsum.photos/seed/default/120/120.jpg"} 
-                      alt={booking?.listing?.title || "Property"}
-                      className="booking-image"
-                    />
-                    <div className="booking-info">
-                      <h3>{booking?.listing?.title || "Property Title"}</h3>
-                      <p>📅 {booking?.checkIn ? new Date(booking.checkIn).toLocaleDateString() : "TBD"} - {booking?.checkOut ? new Date(booking.checkOut).toLocaleDateString() : "TBD"}</p>
-                      <p>💰 ₹{booking?.totalPrice?.toLocaleString() || "0"}</p>
-                      <span className={`status-badge ${booking?.status || "pending"}`}>{booking?.status || "Pending"}</span>
+                {bookings.map((booking) => {
+                  const nights = booking.checkIn && booking.checkOut 
+                    ? Math.ceil((new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / (1000 * 60 * 60 * 24))
+                    : 0;
+                  
+                  return (
+                    <div key={booking._id} className="booking-card">
+                      <img 
+                        src={booking?.listing?.images?.[0] || "https://picsum.photos/seed/default/120/120.jpg"} 
+                        alt={booking?.listing?.title || "Property"}
+                        className="booking-image"
+                      />
+                      <div className="booking-info">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div style={{ flex: 1 }}>
+                            <h3>{booking?.listing?.title || "Property Title"}</h3>
+                            <p className="booking-location">📍 {booking?.listing?.location || "Location"}</p>
+                            <p className="booking-dates">
+                              📅 {booking?.checkIn ? new Date(booking.checkIn).toLocaleDateString('en-IN') : "TBD"} 
+                              {" → "} 
+                              {booking?.checkOut ? new Date(booking.checkOut).toLocaleDateString('en-IN') : "TBD"}
+                            </p>
+                            <p className="booking-nights">🌙 {nights} nights</p>
+                            <p className="booking-price">💰 ₹{booking?.totalPrice?.toLocaleString('en-IN') || "0"}</p>
+                            <span className={`status-badge ${booking?.status || "pending"}`}>
+                              {booking?.paymentStatus ? (booking.paymentStatus === "paid" ? "✅ Paid" : "⏳ Pending") : "✅ Confirmed"}
+                            </span>
+                          </div>
+                          
+                          {/* 3-Dot Menu */}
+                          <div style={{ position: 'relative' }}>
+                            <button 
+                              onClick={() => setOpenMenu(openMenu === booking._id ? null : booking._id)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                padding: '5px 10px',
+                                color: '#666'
+                              }}
+                              title="More options"
+                            >
+                              ⋮
+                            </button>
+                            
+                            {/* Dropdown Menu */}
+                            {openMenu === booking._id && (
+                              <div style={{
+                                position: 'absolute',
+                                top: '30px',
+                                right: '0',
+                                background: 'white',
+                                border: '1px solid #ddd',
+                                borderRadius: '6px',
+                                boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                                zIndex: 100,
+                                minWidth: '150px'
+                              }}>
+                                <button
+                                  onClick={() => deleteBooking(booking._id)}
+                                  style={{
+                                    width: '100%',
+                                    padding: '10px 15px',
+                                    border: 'none',
+                                    background: 'none',
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                    color: '#e63946',
+                                    fontSize: '14px',
+                                    borderRadius: '6px',
+                                    transition: 'background-color 0.2s'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ffebee'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  🗑️ Cancel Booking
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

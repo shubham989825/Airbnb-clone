@@ -8,27 +8,40 @@ const Login = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
 const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
+      console.log("🔐 Attempting login with:", email);
+      
       const res = await axiosInstance.post("/auth/login", { email, password });
       
+      console.log("✅ Login response:", res.data);
+
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data));
         
-        // Store user data for profile
-        localStorage.setItem("user", JSON.stringify(res.data.user));
+        console.log("✅ Token saved to localStorage");
+        console.log("👤 User:", res.data.name, `(ID: ${res.data._id})`);
         
-        alert("Login successful");
+        alert(`Login successful! Welcome ${res.data.name} 🎉`);
         navigate("/");
       } else {
-        alert(res.data.message || "Login failed");
+        setError(res.data.message || "Login failed");
       }
     } catch (error: any) {
-      console.error("Login error:", error);
-      alert(error.response?.data?.message || error.message || "Something went wrong");
+      console.error("❌ Login error:", error);
+      const errorMsg = error.response?.data?.message || error.message || "Something went wrong";
+      setError(errorMsg);
+      alert(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,6 +49,19 @@ const handleLogin = async (e: React.FormEvent) => {
     <div className="login-page">
       <div className="login-card">
         <h2 className="login-title">Welcome Back! 👋</h2>
+
+        {error && (
+          <div className="error-message" style={{
+            background: '#ffebee',
+            color: '#c62828',
+            padding: '10px',
+            borderRadius: '6px',
+            marginBottom: '15px',
+            fontSize: '14px'
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
 
         <form className="login-form" onSubmit={handleLogin}>
           <input
@@ -56,8 +82,8 @@ const handleLogin = async (e: React.FormEvent) => {
             required
           />
 
-          <button type="submit" className="login-button">
-            Login
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
@@ -67,6 +93,21 @@ const handleLogin = async (e: React.FormEvent) => {
             Register
           </Link>
         </p>
+
+        {/* Test credentials info */}
+        <div style={{
+          background: '#e8f5e9',
+          border: '1px solid #4caf50',
+          borderRadius: '6px',
+          padding: '10px',
+          marginTop: '15px',
+          fontSize: '12px',
+          color: '#2e7d32'
+        }}>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🧪 Test Credentials:</p>
+          <p style={{ margin: '0 0 4px 0' }}>Email: testuser1775160481503@example.com</p>
+          <p style={{ margin: '0' }}>Password: TestPassword123!</p>
+        </div>
       </div>
     </div>
   );

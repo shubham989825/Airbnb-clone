@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ReviewList from "../components/ReviewList";
 import ReviewForm from "../components/ReviewForm";
@@ -25,6 +25,7 @@ interface Property {
 
 const PropertyDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [property, setProperty] = useState<Property | null>(null);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -57,20 +58,43 @@ const PropertyDetails = () => {
         return;
       }
 
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in first");
+        return;
+      }
+
+      console.log("📅 Creating booking...");
+      console.log("   Property:", property?._id);
+      console.log("   Check-in:", checkIn);
+      console.log("   Check-out:", checkOut);
+
       setLoading(true);
 
-      await axiosInstance.post(`/bookings/${property?._id}`, {
+      const response = await axiosInstance.post(`/bookings/${property?._id}`, {
         checkIn,
         checkOut,
       });
 
-      alert("Booking successful 🎉");
+      console.log("✅ Booking created successfully!");
+      console.log("   Booking ID:", response.data._id);
+      console.log("   Total Price:", response.data.totalPrice);
 
+      alert("Booking successful 🎉\n\nRedirecting to your Profile...");
+
+      // Clear form
       setCheckIn("");
       setCheckOut("");
 
+      // Wait a moment then redirect to Profile
+      setTimeout(() => {
+        navigate("/profile");
+      }, 1500);
+
     } catch (error: any) {
-      alert(error.response?.data?.message || "Booking failed");
+      console.error("❌ Booking error:", error);
+      const errorMsg = error.response?.data?.message || error.message || "Booking failed";
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
