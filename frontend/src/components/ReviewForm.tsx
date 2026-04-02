@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 
-const ReviewForm = ({ listingId }: { listingId: string }) => {
+const ReviewForm = ({ listingId, onReviewAdded }: { listingId: string; onReviewAdded?: () => void }) => {
 
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -10,19 +10,24 @@ const ReviewForm = ({ listingId }: { listingId: string }) => {
     e.preventDefault();
 
     try {
-      await axiosInstance.post(`/reviews/${listingId}`, {
+      await axiosInstance.post(`/reviews`, {
+        listingId,
         rating,
-        comment
+        comment,
       });
-
-      alert("Review added!");
-window.location.reload();
 
       setComment("");
 
-    } catch (error) {
-      console.error(error);
-      alert("Error adding review");
+      if (onReviewAdded) {
+        onReviewAdded();
+      }
+
+      alert("Review added!");
+
+    } catch (error: any) {
+      console.error("Error adding review", error?.response?.data || error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Error adding review";
+      alert(`Error adding review: ${errorMessage}`);
     }
   };
 
