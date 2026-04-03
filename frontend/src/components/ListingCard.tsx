@@ -41,7 +41,6 @@ const ListingCard = ({ listing }: ListingProps) => {
         
         try {
             if (isLiked) {
-                // Remove from wishlist
                 await axiosInstance.delete(`/wishlist/${listing._id}`);
                 setIsLiked(false);
             } else {

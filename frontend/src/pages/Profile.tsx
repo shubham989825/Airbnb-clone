@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useLocation } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import MyReviews from "../components/MyReviews";
 import "../styles/Profile.css";
@@ -18,11 +17,13 @@ interface Booking {
   listing?: {
     title?: string;
     images?: string[];
+    location?: string;
   };
   checkIn: string;
   checkOut: string;
   totalPrice: number;
   status: string;
+  paymentStatus?: string;
 }
 
 interface UserListing {
@@ -34,7 +35,6 @@ interface UserListing {
 }
 
 const Profile = () => {
-  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [listings, setListings] = useState<UserListing[]>([]);
@@ -330,13 +330,7 @@ const Profile = () => {
         >
           🏠 My Listings
         </button>
-        <button 
-          className={`tab-btn ${activeTab === "wishlist" ? "active" : ""}`}
-          onClick={() => setActiveTab("wishlist")}
-        >
-          ❤️ Wishlist
-        </button>
-
+    
         <button 
           className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`}
           onClick={() => setActiveTab("reviews")}
@@ -525,13 +519,6 @@ const Profile = () => {
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === "wishlist" && (
-          <div className="wishlist-content">
-            <h2>My Wishlist</h2>
-            <p>📱 Wishlist feature coming soon! Check back later.</p>
           </div>
         )}
 

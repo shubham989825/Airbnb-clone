@@ -14,48 +14,18 @@ interface Listing {
 const Wishlist = () => {
   const [wishlist, setWishlist] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWishlist = async () => {
       console.log("Wishlist: Starting fetch...");
       try {
-        // Get user's wishlist from backend
-        const res = await axiosInstance.get("/api/wishlist");
+        const res = await axiosInstance.get("/wishlist");
         console.log("Wishlist: API response:", res.data);
         setWishlist(res.data);
-      } catch (error) {
-        console.error("Error fetching wishlist:", error);
-        // If no wishlist endpoint exists, use localStorage as fallback
-        const savedWishlist = localStorage.getItem("wishlist");
-        if (savedWishlist) {
-          console.log("Wishlist: Using localStorage fallback");
-          const wishlistIds = JSON.parse(savedWishlist);
-          // Fetch full listing details for wishlist items
-          const listingsPromises = wishlistIds.map((id: string) => 
-            axiosInstance.get(`/api/listings/${id}`)
-          );
-          const listings = await Promise.all(listingsPromises);
-          setWishlist(listings.map(res => res.data));
-        } else {
-          // Show mock data for testing
-          console.log("Wishlist: No data found, showing mock wishlist");
-          setWishlist([
-            {
-              _id: "mock1",
-              title: "Beautiful Beach House",
-              price: 5000,
-              location: "Goa, India",
-              images: ["https://picsum.photos/seed/mock1/800/600.jpg"]
-            },
-            {
-              _id: "mock2", 
-              title: "Mountain Villa",
-              price: 8000,
-              location: "Manali, India",
-              images: ["https://picsum.photos/seed/mock2/800/600.jpg"]
-            }
-          ]);
-        }
+      } catch (err: any) {
+        console.error("Error fetching wishlist:", err);
+        setError(err.response?.data?.message || "Failed to load wishlist. Please log in and save properties to keep them here.");
       } finally {
         setLoading(false);
       }
@@ -86,15 +56,20 @@ const Wishlist = () => {
 
   if (loading) return <p className="wishlist-loading">Loading wishlist...</p>;
 
+  if (error) {
+    return (
+      <div className="wishlist-error">
+        <p>⚠️ {error}</p>
+      </div>
+    );
+  }
+
   if (wishlist.length === 0) {
     return (
       <div className="wishlist-empty">
         <div className="wishlist-empty-icon">💔</div>
         <h2>Your wishlist is empty</h2>
-        <p>Start adding properties you love to see them here!</p>
-        <Link to="/" className="wishlist-browse-btn">
-          Browse Properties
-        </Link>
+        <p>Like properties to add them to your wishlist.</p>
       </div>
     );
   }
