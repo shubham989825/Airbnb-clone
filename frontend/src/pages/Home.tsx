@@ -33,8 +33,8 @@ const Home = () => {
         console.log("Fetching listings from:", "/listings");
         const res = await axiosInstance.get("/listings");
         console.log("API response:", res.data);
-        setListings(res.data);
-        setFilteredListings(res.data);
+        setListings(res.data.listings);
+        setFilteredListings(res.data.listings);
       } catch (err) {
         console.error("Error fetching listings:", err);
       } finally {

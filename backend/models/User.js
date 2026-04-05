@@ -21,6 +21,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    phone: {
+        type: String,
+        trim: true
+    },
+    idProof: {
+        type: String, // URL to uploaded ID proof image
+    },
     isHost: {
         type: Boolean,
         default: false
@@ -32,7 +39,12 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-    }
+    },
+    role: {
+  type: String,
+  enum: ["user", "host"],
+  default: "user"
+}
 }, {timestamps: true});
 
 const User = mongoose.model('User', userSchema);
