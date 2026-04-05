@@ -1,4 +1,5 @@
 import Listing from "../models/Listing.js";
+import cloudinary from "../config/cloudinary.js";
 
 // CREATE LISTING (WITH IMAGE UPLOAD)
 export const createListing = async (req, res) => {
@@ -19,13 +20,25 @@ export const createListing = async (req, res) => {
       bathrooms,
     } = req.body;
 
-    // Get uploaded images from multer
-    const imagePaths = req.files
-      ? req.files.map((file) => file.path)
-      : [];
+      let imageUrls = [];
 
-    console.log(" Debug - Image paths:", imagePaths);
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: "airbnb-clone",
+        });
 
+         imageUrls.push({
+      url: result.secure_url,
+      public_id: result.public_id, 
+    });
+
+         
+        fs.unlinkSync(file.path);
+      }
+    }
+
+    console.log(" Cloudinary URLs:", imageUrls);
     const listing = await Listing.create({
       title,
       description,
@@ -119,6 +132,50 @@ export const getListingById = async (req, res) => {
       success: false,
       message: "Error fetching listing",
       error: error.message,
+    });
+  }
+};
+// ✅ DELETE LISTING
+export const deleteListing = async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        message: "Listing not found",
+      });
+    }
+
+    // Optional: check if user is owner
+    if (listing.host.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this listing",
+      });
+    }
+       if (listing.images && listing.images.length > 0) {
+      for (const img of listing.images) {
+        // Only delete if public_id exists (for old data safety)
+        if (img.public_id) {
+          await cloudinary.uploader.destroy(img.public_id);
+        }
+      }
+    }
+
+    await listing.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "Listing deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Delete Listing Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Error deleting listing",
     });
   }
 };

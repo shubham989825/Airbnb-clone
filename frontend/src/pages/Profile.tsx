@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import MyReviews from "../components/MyReviews";
 import "../styles/Profile.css";
@@ -64,6 +65,16 @@ const Profile = () => {
 
   // Close menu when clicking outside
   useClickOutside(() => setOpenMenu(null));
+
+  const getImageUrl = (imagePath: string) => {
+    // Convert Windows path to web URL with full backend URL
+    if (imagePath && imagePath.includes('uploads\\')) {
+      // Replace backslashes with forward slashes and add full backend URL
+      const cleanPath = imagePath.replace(/\\/g, '/').replace('uploads/', '');
+      return `http://localhost:5000/uploads/${cleanPath}`;
+    }
+    return imagePath;
+  };
 
   const handleDeleteListing = async (listingId: string) => {
     const confirmDelete = window.confirm(
@@ -704,16 +715,18 @@ const Profile = () => {
                       )}
                     </div>
                     
-                    <img 
-                      src={listing.images?.[0] || "https://picsum.photos/seed/default/150/150.jpg"} 
-                      alt={listing.title || "Property"}
-                      className="listing-thumb"
-                    />
-                    <div className="listing-info">
-                      <h3>{listing.title || "Property Title"}</h3>
-                      <p>💰 ₹{listing.price?.toLocaleString() || "0"}/night</p>
-                      <p>📍 {listing.location || "Location"}</p>
-                    </div>
+                    <Link to={`/property/${listing._id}`} className="listing-link">
+                      <img 
+                        src={listing.images?.[0] ? getImageUrl(listing.images[0]) : "https://picsum.photos/seed/default/150/150.jpg"} 
+                        alt={listing.title || "Property"}
+                        className="listing-thumb"
+                      />
+                      <div className="listing-info">
+                        <h3>{listing.title || "Property Title"}</h3>
+                        <p>💰 ₹{listing.price?.toLocaleString() || "0"}/night</p>
+                        <p>📍 {listing.location || "Location"}</p>
+                      </div>
+                    </Link>
                   </div>
                 ))}
               </div>

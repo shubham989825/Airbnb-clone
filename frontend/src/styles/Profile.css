@@ -123,6 +123,7 @@
   font-size: 0.875rem;
 }
 
+
 /* Edit Profile Modal */
 .edit-profile-modal {
   position: fixed;
@@ -404,6 +405,7 @@
 
 .user-listing-card {
   background: white;
+  width: 350px;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -520,8 +522,18 @@
 
 .listing-thumb {
   width: 100%;
-  height: 150px;
+  height: 240px;
   object-fit: cover;
+}
+
+.listing-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.listing-link:hover {
+  text-decoration: none;
 }
 
 .user-listing-card .listing-info {
