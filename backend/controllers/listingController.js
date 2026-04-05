@@ -1,8 +1,12 @@
 import Listing from "../models/Listing.js";
 
-// ✅ CREATE LISTING (WITH IMAGE UPLOAD)
+// CREATE LISTING (WITH IMAGE UPLOAD)
 export const createListing = async (req, res) => {
   try {
+    console.log(" Debug - Request body:", req.body);
+    console.log(" Debug - Request files:", req.files);
+    console.log(" Debug - All request fields:", Object.keys(req.body));
+    
     const {
       title,
       description,
@@ -15,17 +19,19 @@ export const createListing = async (req, res) => {
       bathrooms,
     } = req.body;
 
-    // 🖼️ Get uploaded images from multer
+    // Get uploaded images from multer
     const imagePaths = req.files
       ? req.files.map((file) => file.path)
       : [];
+
+    console.log(" Debug - Image paths:", imagePaths);
 
     const listing = await Listing.create({
       title,
       description,
       price,
       location,
-      images: imagePaths, // ✅ store uploaded image paths
+      images: imagePaths, // store uploaded image paths
       amenities,
       category,
       guests,

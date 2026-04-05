@@ -17,6 +17,16 @@ const ListingCard = ({ listing }: ListingProps) => {
     const [isLiked, setIsLiked] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     
+    const getImageUrl = (imagePath: string) => {
+        // Convert Windows path to web URL with full backend URL
+        if (imagePath && imagePath.includes('uploads\\')) {
+            // Replace backslashes with forward slashes and add full backend URL
+            const cleanPath = imagePath.replace(/\\/g, '/').replace('uploads/', '');
+            return `http://localhost:5000/uploads/${cleanPath}`;
+        }
+        return imagePath;
+    };
+    
     useEffect(() => {
         // Check if property is in wishlist
         const checkWishlist = async () => {
@@ -66,8 +76,12 @@ const ListingCard = ({ listing }: ListingProps) => {
     };
 
     const imageUrl = listing.images && listing.images.length > 0 
-        ? listing.images[0] 
+        ? getImageUrl(listing.images[0]) 
         : 'https://picsum.photos/seed/placeholder/800/600.jpg';
+    
+    // Debug: Log what we're trying to load
+    console.log('ListingCard - Original image path:', listing.images[0]);
+    console.log('ListingCard - Converted image URL:', imageUrl);
 
     return (
         <div className="listing-card-container">
@@ -79,6 +93,13 @@ const ListingCard = ({ listing }: ListingProps) => {
                         alt={listing.title}
                         className="listing-image"
                         onLoad={() => setImageLoaded(true)}
+                        onError={(e) => {
+                            console.error('Image failed to load:', imageUrl);
+                            console.error('Error event:', e);
+                            // Try fallback
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://picsum.photos/seed/placeholder/800/600.jpg';
+                        }}
                         style={{
                             opacity: imageLoaded ? 1 : 0.7,
                             transition: "opacity 0.3s ease",

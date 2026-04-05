@@ -73,9 +73,18 @@ const AddProperty = () => {
 
     // 👇 append images
     if (imageFiles) {
+      console.log("Uploading images:", imageFiles);
+      console.log("Number of images:", imageFiles.length);
       for (let i = 0; i < imageFiles.length; i++) {
+        console.log(`Appending image ${i}:`, imageFiles[i]);
         formData.append("images", imageFiles[i]);
       }
+    }
+
+    // Debug: Log all FormData entries
+    console.log("FormData entries:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
     }
 
     await axiosInstance.post("/listings", formData, {
