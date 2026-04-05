@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import validator from 'validator';
 
 const listingSchema = new mongoose.Schema({
      title: {
@@ -47,6 +48,21 @@ const listingSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true
+    },
+    Phone: {
+      type: String,
+      required: true,
+      validate: {
+        validator: function(v) {
+          return /^[0-9]{10}$/.test(v);
+        },
+        message: "Invalid phone number"
+      }
+    },
+    Email: {
+      type: String,
+      required: true,
+      validate: [validator.isEmail, "Invalid email"]
     }
 }, {timestamps: true});
 

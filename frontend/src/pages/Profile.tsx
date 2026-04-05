@@ -3,6 +3,21 @@ import axiosInstance from "../api/axiosInstance";
 import MyReviews from "../components/MyReviews";
 import "../styles/Profile.css";
 
+// Add click outside handler
+const useClickOutside = (callback: () => void) => {
+  const handleClick = useCallback((e: MouseEvent) => {
+    const target = e.target as Element;
+    if (!target.closest('.listing-menu-container')) {
+      callback();
+    }
+  }, [callback]);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [handleClick]);
+};
+
 interface User {
   _id: string;
   name: string;
@@ -10,6 +25,8 @@ interface User {
   createdAt: string;
   isHost?: boolean;
   verificationStatus?: string;
+  phone?: string;
+  idProof?: string;
 }
 
 interface Booking {
@@ -43,11 +60,46 @@ const Profile = () => {
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+
+  // Close menu when clicking outside
+  useClickOutside(() => setOpenMenu(null));
+
+  const handleDeleteListing = async (listingId: string) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this listing? This action cannot be undone."
+    );
+    
+    if (!confirmDelete) return;
+
+    try {
+      setDeleteLoading(listingId);
+      await axiosInstance.delete(`/listings/${listingId}`);
+      
+      // Remove the deleted listing from state
+      setListings(prev => prev.filter(listing => listing._id !== listingId));
+      setOpenMenu(null);
+      
+      alert("Listing deleted successfully!");
+    } catch (error: any) {
+      console.error("Error deleting listing:", error);
+      const errorMsg = error.response?.data?.message || "Failed to delete listing";
+      alert(errorMsg);
+    } finally {
+      setDeleteLoading(null);
+    }
+  };
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     bio: ""
   });
+  const [showHostForm, setShowHostForm] = useState(false);
+  const [hostFormData, setHostFormData] = useState({
+    phone: "",
+    idProofFile: null as File | null
+  });
+  const [hostFormLoading, setHostFormLoading] = useState(false);
 
   // Separate function to fetch bookings
   const fetchBookings = useCallback(async () => {
@@ -93,24 +145,6 @@ const Profile = () => {
     console.log("🔄 Profile component mounted, loading user data...");
     
     const fetchProfileData = async () => {
-      // First check if user data exists in localStorage
-      const savedUser = localStorage.getItem("user");
-      if (savedUser && savedUser !== "undefined") {
-        try {
-          const userData = JSON.parse(savedUser);
-          console.log("Found user data in localStorage:", userData.name);
-          setUser(userData);
-          setFormData({
-            name: userData.name || "",
-            email: userData.email || "",
-            bio: userData.bio || ""
-          });
-        } catch (parseError) {
-          console.error("Error parsing localStorage user data:", parseError);
-          localStorage.removeItem("user");
-        }
-      }
-
       // Check if token exists
       const token = localStorage.getItem("token");
       if (!token) {
@@ -122,16 +156,21 @@ const Profile = () => {
       console.log("Token found, fetching from API...");
       
       try {
-        // Try to get user data from API
-        const userRes = await axiosInstance.get("/api/profile/profile");
+        // Always fetch fresh user data from API first
+        const userRes = await axiosInstance.get("/profile");
         console.log("Profile response:", userRes.data);
         
         if (userRes.data && userRes.data.user) {
-          setUser(userRes.data.user);
+          const userData = userRes.data.user;
+          setUser(userData);
+          
+          // Update localStorage with fresh data
+          localStorage.setItem("user", JSON.stringify(userData));
+          
           setFormData({
-            name: userRes.data.user.name || "",
-            email: userRes.data.user.email || "",
-            bio: userRes.data.user.bio || ""
+            name: userData.name || "",
+            email: userData.email || "",
+            bio: userData.bio || ""
           });
         }
 
@@ -149,17 +188,25 @@ const Profile = () => {
       } catch (error) {
         console.error("Error fetching profile from API:", error);
         
-        // If API fails but we have localStorage user data, that's ok
-        if (!user) {
-          const mockUser: User = {
-            _id: "mock123",
-            name: "Test User",
-            email: "test@example.com",
-            createdAt: new Date().toISOString(),
-            isHost: false,
-            verificationStatus: "pending"
-          };
-          setUser(mockUser);
+        // Fallback to localStorage if API fails
+        const savedUser = localStorage.getItem("user");
+        if (savedUser && savedUser !== "undefined") {
+          try {
+            const userData = JSON.parse(savedUser);
+            console.log("Using localStorage fallback:", userData.name);
+            setUser(userData);
+            setFormData({
+              name: userData.name || "",
+              email: userData.email || "",
+              bio: userData.bio || ""
+            });
+          } catch (parseError) {
+            console.error("Error parsing localStorage user data:", parseError);
+            localStorage.removeItem("user");
+            alert("Session expired. Please log in again.");
+          }
+        } else {
+          alert("Failed to load profile data. Please log in again.");
         }
       } finally {
         setLoading(false);
@@ -199,15 +246,56 @@ const Profile = () => {
     }
   };
 
-  const handleBecomeHost = async () => {
-    try {
-      await axiosInstance.post("/api/profile/become-host");
-      setUser({ ...user!, isHost: true });
-      alert("You are now a host! 🎉");
-    } catch (error) {
-      console.error("Error becoming host:", error);
-      alert("Failed to become host");
+  const handleBecomeHost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setHostFormLoading(true);
+
+    if (!hostFormData.idProofFile) {
+      alert("Please upload your ID proof image.");
+      setHostFormLoading(false);
+      return;
     }
+
+    try {
+      const formData = new FormData();
+      formData.append("phone", hostFormData.phone);
+      formData.append("idProof", hostFormData.idProofFile);
+
+      const response = await axiosInstance.post("/profile/become-host", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
+
+      setUser(response.data.user);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+
+      setShowHostForm(false);
+      setHostFormData({ phone: "", idProofFile: null });
+      alert(response.data.message);
+    } catch (error: any) {
+      console.error("Error becoming host:", error);
+      const errorMsg = error.response?.data?.message || "Failed to submit host application";
+      alert(errorMsg);
+    } finally {
+      setHostFormLoading(false);
+    }
+  };
+
+  const handleHostFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, files } = e.target as HTMLInputElement;
+    if (name === "idProof" && files) {
+      setHostFormData(prev => ({
+        ...prev,
+        idProofFile: files[0]
+      }));
+      return;
+    }
+
+    setHostFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   if (loading) return <div className="profile-loading">Loading profile...</div>;
@@ -238,8 +326,8 @@ const Profile = () => {
               ✏️ Edit Profile
             </button>
             {!user.isHost && (
-              <button 
-                onClick={handleBecomeHost}
+              <button
+                onClick={() => setShowHostForm(true)}
                 className="profile-btn host-btn"
               >
                 🏠 Become a Host
@@ -291,6 +379,84 @@ const Profile = () => {
                 </button>
                 <button type="button" onClick={() => setEditing(false)} className="cancel-btn">
                   Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Host Application Form */}
+      {showHostForm && (
+        <div className="profile-edit-section">
+          <div className="edit-form-container">
+            <h3>🏠 Become a Host Application</h3>
+            <p>To become a host, please provide the following information:</p>
+
+            <form onSubmit={handleBecomeHost} className="edit-form">
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={user?.email || ""}
+                  disabled
+                  className="form-input disabled-input"
+                />
+                <small className="form-help">This is your registered email address</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="phone">Phone Number *</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={hostFormData.phone}
+                  onChange={handleHostFormChange}
+                  placeholder="Enter 10-digit phone number"
+                  required
+                  pattern="[0-9]{10}"
+                  className="form-input"
+                />
+                <small className="form-help">Enter a valid 10-digit phone number</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="idProof">Upload ID Proof Image *</label>
+                <input
+                  type="file"
+                  id="idProof"
+                  name="idProof"
+                  accept="image/*"
+                  onChange={handleHostFormChange}
+                  required
+                  className="form-input"
+                />
+                <small className="form-help">Choose an image from your device gallery or files</small>
+                {hostFormData.idProofFile && (
+                  <p className="form-help">Selected file: {hostFormData.idProofFile.name}</p>
+                )}
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHostForm(false);
+                    setHostFormData({ phone: "", idProofFile: null });
+                  }}
+                  className="cancel-btn"
+                  disabled={hostFormLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="save-btn"
+                  disabled={hostFormLoading}
+                >
+                  {hostFormLoading ? "Submitting..." : "Submit Application"}
                 </button>
               </div>
             </form>
@@ -505,6 +671,39 @@ const Profile = () => {
               <div className="listings-grid">
                 {listings.map((listing) => (
                   <div key={listing._id} className="user-listing-card">
+                    {/* Three-dot menu button */}
+                    <div className="listing-menu-container">
+                      <button 
+                        className="listing-menu-btn"
+                        onClick={() => setOpenMenu(openMenu === listing._id ? null : listing._id)}
+                      >
+                        ⋮
+                      </button>
+                      
+                      {/* Dropdown menu */}
+                      {openMenu === listing._id && (
+                        <div className="listing-dropdown-menu">
+                          <button 
+                            className="dropdown-item delete-item"
+                            onClick={() => handleDeleteListing(listing._id)}
+                            disabled={deleteLoading === listing._id}
+                          >
+                            {deleteLoading === listing._id ? (
+                              <>
+                                <span className="loading-spinner">⏳</span>
+                                <span>Deleting...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>🗑️</span>
+                                <span>Delete Listing</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
                     <img 
                       src={listing.images?.[0] || "https://picsum.photos/seed/default/150/150.jpg"} 
                       alt={listing.title || "Property"}

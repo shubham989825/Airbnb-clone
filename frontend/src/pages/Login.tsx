@@ -25,10 +25,18 @@ const handleLogin = async (e: React.FormEvent) => {
 
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
-        localStorage.setItem("user", JSON.stringify(res.data));
         
-        console.log("✅ Token saved to localStorage");
-        console.log("👤 User:", res.data.name, `(ID: ${res.data._id})`);
+        // Save user data (without token) to localStorage
+        const userData = {
+          _id: res.data._id,
+          name: res.data.name,
+          email: res.data.email,
+          role: res.data.role || "user"
+        };
+        localStorage.setItem("user", JSON.stringify(userData));
+        
+        console.log("✅ Token and user data saved to localStorage");
+        console.log("👤 User:", res.data.name, `(Email: ${res.data.email})`);
         
         alert(`Login successful! Welcome ${res.data.name} 🎉`);
         navigate("/");
