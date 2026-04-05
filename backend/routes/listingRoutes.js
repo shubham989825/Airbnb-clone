@@ -9,16 +9,23 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+    // Generate web-friendly filename
+    const originalName = file.originalname;
+    const extension = originalName.split('.').pop();
+    const nameWithoutExt = originalName.split('.').slice(0, -1).join('.');
+    // Remove special characters, keep only alphanumeric, spaces, hyphens, and underscores
+    const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9\s_\-]/g, '');
+    const timestamp = Date.now();
+    const webFriendlyName = `${sanitizedName}-${timestamp}.${extension}`;
+    cb(null, webFriendlyName);
+  },
 });
 
 const upload = multer({ storage });
 
 const router = express.Router();
 
-// router.post("/", protect, hostOnly, createListing);
-
+// POST route with image upload
 router.post("/",protect,hostOnly,upload.array("images", 5), createListing);
 router.get("/", getAllListings);
 router.get("/:id", getListingById);  

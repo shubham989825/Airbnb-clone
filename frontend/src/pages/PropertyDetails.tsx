@@ -1,9 +1,25 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import ReviewList from "../components/ReviewList";
 import ReviewForm from "../components/ReviewForm";
 import axiosInstance from "../api/axiosInstance";
+import ImageSwipeSlider from "../components/ImageSwipeSlider";
 import "../styles/PropertyDetails.css";
+
+// Add click outside handler
+const useClickOutside = (callback: () => void) => {
+  const handleClick = useCallback((e: MouseEvent) => {
+    const target = e.target as Element;
+    if (!target.closest('.property-menu-container')) {
+      callback();
+    }
+  }, [callback]);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [handleClick]);
+};
 
 interface Property {
   _id: string;
@@ -18,12 +34,13 @@ interface Property {
   amenities?: string[];
   category?: string;
   host?: {
+    _id: string;
     name: string;
     isSuperhost: boolean;
     avatar?: string;
   };
-  Phone: string;
-  Email: string;
+  Phone?: string;
+  Email?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -39,16 +56,32 @@ const PropertyDetails = () => {
   const [reviewRefresh, setReviewRefresh] = useState(0);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProperty = async () => {
       try {
         const res = await axiosInstance.get(`/listings/${id}`);
-        // Extract the actual listing data from the response
-        if (res.data && res.data.listing) {
-          setProperty(res.data.listing);
-        } else {
-          setProperty(res.data);
+        console.log("Full API response:", res.data);
+        console.log("Response structure:", JSON.stringify(res.data, null, 2));
+        console.log("Images in response:", res.data?.listing?.images);
+        console.log("Direct images:", res.data?.images);
+        
+        // Force refresh property data regardless of response structure
+        if (res.data) {
+          if (res.data.listing && res.data.listing.images) {
+            // Case 1: Nested structure with images in listing
+            setProperty(res.data.listing);
+          } else if (res.data.images) {
+            // Case 2: Direct images array
+            setProperty({
+              ...res.data,
+              images: res.data.images
+            });
+          } else {
+            // Case 3: Fallback to full response
+            setProperty(res.data);
+          }
         }
       } catch (error) {
         console.error("Error fetching property:", error);
@@ -73,6 +106,49 @@ const PropertyDetails = () => {
     fetchProperty();
     fetchCurrentUser();
   }, [id]);
+
+  // Close menu when clicking outside
+  useClickOutside(() => setOpenMenu(null));
+
+  // Generate random contact info when missing
+  const generateRandomPhone = () => {
+    const prefixes = ['98', '97', '96', '95', '94', '93', '92', '91', '90', '88', '87', '86', '85', '84', '83', '82', '81'];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const suffix = Math.floor(Math.random() * 10000000).toString().padStart(8, '0');
+    return `${prefix}${suffix}`;
+  };
+
+  const generateRandomEmail = () => {
+    const domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'email.com'];
+    const names = ['contact', 'inquiry', 'booking', 'reservation', 'info', 'support', 'service', 'office', 'admin', 'manager'];
+    const domain = domains[Math.floor(Math.random() * domains.length)];
+    const name = names[Math.floor(Math.random() * names.length)];
+    const randomNum = Math.floor(Math.random() * 999);
+    return `${name}${randomNum}@${domain}`;
+  };
+
+  const getContactPhone = () => {
+    // Only use property phone if available
+    if (property?.Phone) {
+      return property.Phone;
+    }
+    // Only use host phone if property doesn't have phone
+    if (currentUser?.phone) {
+      return currentUser.phone;
+    }
+    // Generate random phone only if neither property nor host has phone
+    return generateRandomPhone();
+  };
+
+  const getImageUrl = (imagePath: string) => {
+  // Convert Windows path to web URL with full backend URL
+  if (imagePath && imagePath.includes('uploads\\')) {
+    // Replace backslashes with forward slashes and add full backend URL
+    const cleanPath = imagePath.replace(/\\/g, '/').replace('uploads/', '');
+    return `http://localhost:5000/uploads/${cleanPath}`;
+  }
+  return imagePath;
+};
 
   const handleDeleteProperty = async () => {
     if (!property) return;
@@ -172,29 +248,42 @@ const PropertyDetails = () => {
             <h1 className="main-title">{property?.title || 'Property'}</h1>
             <div className="header-info">
               <p className="location-text">📍 {property?.location || 'Location'}</p>
-              <p className="price-text">💰 ₹{
-                (property?.price || property?.pricePerNight || property?.nightlyRate || 0)?.toLocaleString() || '0'
-              }/night</p>
+              <p className="price-text">💰 ₹{property?.price?.toLocaleString() || '0'}/night</p>
             </div>
           </div>
           
-          {/* Delete Button - Only for Hosts */}
+          {/* Three-dot Menu - Only for Hosts */}
           {isHost() && (
-            <div className="header-actions">
-              <button
-                className="delete-property-btn"
-                onClick={handleDeleteProperty}
-                disabled={deleteLoading}
+            <div className="property-menu-container">
+              <button 
+                className="property-menu-btn"
+                onClick={() => setOpenMenu(openMenu === 'property' ? null : 'property')}
               >
-                {deleteLoading ? (
-                  <span className="loading-spinner">⏳ Deleting...</span>
-                ) : (
-                  <>
-                    <span className="delete-icon">🗑️</span>
-                    <span>Delete Property</span>
-                  </>
-                )}
+                ⋮
               </button>
+              
+              {/* Dropdown menu */}
+              {openMenu === 'property' && (
+                <div className="property-dropdown-menu">
+                  <button 
+                    className="dropdown-item delete-item"
+                    onClick={handleDeleteProperty}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? (
+                      <>
+                        <span className="loading-spinner">⏳</span>
+                        <span>Deleting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🗑️</span>
+                        <span>Delete Property</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -203,16 +292,22 @@ const PropertyDetails = () => {
       {/* Image Gallery */}
       <div className="image-gallery">
         <div className="main-image">
-          <img
-            src={property?.images && property.images.length > 0 ? property.images[0] : 'https://picsum.photos/seed/property-detail/800/600.jpg'}
-            alt={property?.title || 'Property'}
-            className="details-image"
-          />
+           <ImageSwipeSlider
+    images={
+      property?.images?.length
+        ? property.images.map((img) => {
+            const convertedUrl = getImageUrl(img);
+            console.log('PropertyDetails - Converting image:', img, 'to:', convertedUrl);
+            return convertedUrl;
+          })
+        : ["https://picsum.photos/seed/property-detail/800/600.jpg"]
+    }
+    />
           <button 
             className="show-photos-btn"
             onClick={() => setShowAllPhotos(!showAllPhotos)}
           >
-            📷 {showAllPhotos ? 'Hide Photos' : 'Show All Photos'}
+            📷 {showAllPhotos ? 'Hide Photos' : 'Show All Photos'} ({property?.images?.length || 0})
           </button>
         </div>
         
@@ -220,7 +315,7 @@ const PropertyDetails = () => {
           <div className="all-photos">
             {property.images.map((image, index) => (
               <div key={index} className="photo-item">
-                <img src={image} alt={`${property?.title || 'Property'} ${index + 1}`} />
+                <img src={getImageUrl(image)} alt={`${property?.title || 'Property'} ${index + 1}`} />
               </div>
             ))}
           </div>
@@ -264,7 +359,7 @@ const PropertyDetails = () => {
             </div>
           </div>
         <div className="contact-section">
-          <h3>📞 Contact Host</h3>
+          <h3>📞 Contact Details</h3>
 
           <p> Phone:{" "}
             {property?.Phone ? (
@@ -336,16 +431,12 @@ const PropertyDetails = () => {
             
             <div className="price-summary">
               <div className="price-item">
-                <span className="price-label">₹{
-                  (property?.price || property?.pricePerNight || property?.nightlyRate || 0)?.toLocaleString() || '0'
-                }</span>
+                <span className="price-label">₹{property?.price?.toLocaleString() || '0'}</span>
                 <span className="price-unit">x nights</span>
               </div>
               <div className="price-item total">
                 <span className="total-label">Total</span>
-                <span className="total-price">₹{
-                  (property?.price || property?.pricePerNight || property?.nightlyRate || 0)?.toLocaleString() || '0'
-                }</span>
+                <span className="total-price">₹{property?.price?.toLocaleString() || '0'}</span>
               </div>
               <div className="price-note">Cleaning fee and taxes included</div>
             </div>
