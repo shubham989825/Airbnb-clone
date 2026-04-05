@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import ReviewList from "../components/ReviewList";
 import ReviewForm from "../components/ReviewForm";
 import axiosInstance from "../api/axiosInstance";
-import ImageSwipeSlider from "../components/ImageSwipeSlider";
+import ImageSwipeSlider from "../components/ImageswipeSlider";
 import "../styles/PropertyDetails.css";
 
 // Add click outside handler

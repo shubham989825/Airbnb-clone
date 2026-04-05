@@ -30,3 +30,7 @@ yarn-error.log*
 # Logs
 logs
 *.log
+
+# Uploads - ignore uploaded images
+backend/uploads/
+uploads/
