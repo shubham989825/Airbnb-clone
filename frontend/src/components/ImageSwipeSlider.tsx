@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import "../styles/ImageSwipeSlider.css";
+import "../styles/ImageswipeSlider.css";
 
 
 
