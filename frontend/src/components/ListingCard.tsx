@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
-import ImageSwipeSlider from "../components/ImageswipeSlider";
+import ImageSwipeSlider from "../components/ImageSwipeSlider";
 import "../styles/ListingCard.css";
 
 interface ListingProps {
