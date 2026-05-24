@@ -14,8 +14,14 @@ axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
 
+    // Ensure headers object exists (safer across axios versions)
+    if (!config.headers) config.headers = {} as any;
+
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('Axios - attaching token (first 30 chars):', token.substring(0, 30));
+    } else {
+      console.log('Axios - no token found in localStorage');
     }
 
     return config;

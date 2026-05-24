@@ -55,6 +55,7 @@ const PropertyDetails = () => {
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [reviewRefresh, setReviewRefresh] = useState(0);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [existingBooking, setExistingBooking] = useState<any | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
@@ -103,42 +104,31 @@ const PropertyDetails = () => {
       }
     };
 
+    const fetchExistingBooking = async () => {
+      try {
+        const res = await axiosInstance.get('/bookings/my');
+        const booking = res.data?.find((b: any) => {
+          const listingId = b.listing?._id || b.listing;
+          return String(listingId) === String(id);
+        });
+
+        if (booking) {
+          setExistingBooking(booking);
+          if (booking.checkIn) setCheckIn(booking.checkIn.slice(0, 10));
+          if (booking.checkOut) setCheckOut(booking.checkOut.slice(0, 10));
+        }
+      } catch (error) {
+        console.error('Error fetching existing booking:', error);
+      }
+    };
+
     fetchProperty();
     fetchCurrentUser();
+    fetchExistingBooking();
   }, [id]);
 
   // Close menu when clicking outside
   useClickOutside(() => setOpenMenu(null));
-
-  // Generate random contact info when missing
-  const generateRandomPhone = () => {
-    const prefixes = ['98', '97', '96', '95', '94', '93', '92', '91', '90', '88', '87', '86', '85', '84', '83', '82', '81'];
-    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-    const suffix = Math.floor(Math.random() * 10000000).toString().padStart(8, '0');
-    return `${prefix}${suffix}`;
-  };
-
-  const generateRandomEmail = () => {
-    const domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'email.com'];
-    const names = ['contact', 'inquiry', 'booking', 'reservation', 'info', 'support', 'service', 'office', 'admin', 'manager'];
-    const domain = domains[Math.floor(Math.random() * domains.length)];
-    const name = names[Math.floor(Math.random() * names.length)];
-    const randomNum = Math.floor(Math.random() * 999);
-    return `${name}${randomNum}@${domain}`;
-  };
-
-  const getContactPhone = () => {
-    // Only use property phone if available
-    if (property?.Phone) {
-      return property.Phone;
-    }
-    // Only use host phone if property doesn't have phone
-    if (currentUser?.phone) {
-      return currentUser.phone;
-    }
-    // Generate random phone only if neither property nor host has phone
-    return generateRandomPhone();
-  };
 
   const getImageUrl = (imagePath: string) => {
   // Convert Windows path to web URL with full backend URL
@@ -183,59 +173,66 @@ const PropertyDetails = () => {
            property.host?._id === currentUser._id;
   };
 
-  const handleBooking = async () => {
+  const handlePayment = async () => {
+    if (existingBooking) {
+      alert('You already have a booking for this property. Check your profile for details.');
+      return;
+    }
+
+    if (!property) return;
+
+    if (!checkIn || !checkOut) {
+      alert("Please select dates");
+      return;
+    }
+
+    const nights = Math.ceil(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
+      (1000 * 60 * 60 * 24)
+    );
+
+    if (nights <= 0) {
+      alert("Check-out must be after check-in");
+      return;
+    }
+
+    const totalPrice = nights * property.price;
+
     try {
-      if (!checkIn || !checkOut) {
-        alert("Please select dates");
-        return;
-      }
-
-      if (new Date(checkOut) <= new Date(checkIn)) {
-        alert("Check-out must be after check-in");
-        return;
-      }
-
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Please log in first");
-        return;
-      }
-
-      console.log("📅 Creating booking...");
-      console.log("   Property:", property?._id);
-      console.log("   Check-in:", checkIn);
-      console.log("   Check-out:", checkOut);
-
       setLoading(true);
 
-      const response = await axiosInstance.post(`/bookings/${property?._id}`, {
+      // If there's an existing pending booking, attach bookingId so backend marks it paid after checkout
+      const payload: any = {
+        listingId: property._id,
         checkIn,
         checkOut,
-      });
+        totalPrice,
+      };
 
-      console.log("✅ Booking created successfully!");
-      console.log("   Booking ID:", response.data._id);
-      console.log("   Total Price:", response.data.totalPrice);
+      if (existingBooking) {
+        if (existingBooking.paymentStatus === 'paid') {
+          alert('This booking is already paid.');
+          return;
+        }
+        payload.bookingId = existingBooking._id;
+      }
 
-      alert("Booking successful 🎉\n\nRedirecting to your Profile...");
-
-      // Clear form
-      setCheckIn("");
-      setCheckOut("");
-
-      // Wait a moment then redirect to Profile
-      setTimeout(() => {
-        navigate("/profile");
-      }, 1500);
-
+      const response = await axiosInstance.post("/payments/create-checkout-session", payload);
+      window.location.href = response.data.url;
     } catch (error: any) {
-      console.error("❌ Booking error:", error);
-      const errorMsg = error.response?.data?.message || error.message || "Booking failed";
-      alert(errorMsg);
+      console.error(error);
+      const msg = error.response?.data?.message || error.message || 'Payment failed';
+      alert(msg);
     } finally {
       setLoading(false);
     }
   };
+
+  const existingBookingMessage = existingBooking
+    ? existingBooking.paymentStatus === 'paid'
+      ? 'You already have a paid booking for this property.'
+      : 'You have an existing booking for this property with pending payment.'
+    : null;
 
   if (!property) return <div className="loading-text">Loading...</div>;
 
@@ -420,13 +417,27 @@ const PropertyDetails = () => {
                   <option>6 guests</option>
                 </select>
               </div>
-              <button 
-                className="book-button" 
-                onClick={handleBooking}
-                disabled={loading}
-              >
-                {loading ? "Booking..." : "Book Now"}
-              </button>
+              {existingBooking ? (
+                <div className="booking-existing-notice">
+                  <p>{existingBookingMessage}</p>
+                  <button
+                    className="view-bookings-btn"
+                    onClick={() => navigate('/profile')}
+                  >
+                    View My Bookings
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button 
+                    className="book-button" 
+                    onClick={handlePayment}
+                    disabled={loading}
+                  >
+                    {loading ? "Processing..." : "Book Now & Pay"}
+                  </button>
+                </>
+              )}
             </div>
             
             <div className="price-summary">

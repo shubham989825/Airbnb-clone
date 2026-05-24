@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
     avatar: {
         type: String,
     },
+    profilePhoto: {
+        type: String,
+        default: ""
+    },
     role: {
   type: String,
   enum: ["user", "host"],

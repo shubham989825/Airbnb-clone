@@ -26,6 +26,7 @@ const Home = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -91,6 +92,71 @@ const Home = () => {
           }} />
         ))}
       </div>
+{/* Floating Help Button */}
+<button
+  className="floating-help-btn"
+  onClick={() => setShowHelp(true)}
+>
+   🆘 Help
+</button>
+
+{/* Help Modal */}
+{showHelp && (
+
+  <div className="help-modal-overlay">
+
+    <div className="help-modal">
+
+      <button
+        className="close-help-btn"
+        onClick={() => setShowHelp(false)}
+      >
+        ✖
+      </button>
+
+      <h2>🆘 Help & Support</h2>
+
+      <div className="help-item">
+
+        <h3>📧 Email Support</h3>
+
+        <a
+          href="mailto:support@stayfinder.com"
+          className="help-link"
+        >
+          airbnbsupport12@gmail.com
+        </a>
+
+      </div>
+
+      <div className="help-item">
+
+        <h3>📞 Helpline</h3>
+
+        <a
+          href="tel:+919876543210"
+          className="help-link"
+        >
+          +91 9876543210
+        </a>
+
+      </div>
+
+      <div className="help-item">
+
+        <h3>🕒 Support Hours</h3>
+
+        <p>
+          Mon - Sun | 9 AM - 9 PM
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
     </div>
   );
 };

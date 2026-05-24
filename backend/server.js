@@ -4,31 +4,39 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
-import bookingRoutes from "./routes/bookingRoutes.js"
-import reviewRoutes from "./routes/reviewRoutes.js"
+import bookingRoutes from "./routes/bookingRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 import propertyRoutes from './routes/propertyRoutes.js';
 import wishlistRoutes from './routes/wishlistRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import path from 'path';
 import fs from 'fs';
+import paymentRoutes from './routes/paymentRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
+
 dotenv.config();
 
 const app = express();
-app.use(express.json());
-
-const uploadsPath = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsPath)) {
-  fs.mkdirSync(uploadsPath, { recursive: true });
-}
-app.use('/uploads', express.static(uploadsPath));
-
+ 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? true 
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
+ 
+app.use(express.json());
+ 
+app.use("/api/payments/webhook", webhookRoutes);
+app.use("/api/payments", paymentRoutes);
+ 
+const uploadsPath = path.join(process.cwd(), 'uploads');
 
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsPath));
+ 
 app.use("/api", propertyRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingRoutes);

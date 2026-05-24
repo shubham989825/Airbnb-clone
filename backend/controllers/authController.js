@@ -27,10 +27,21 @@ export const registerUser = async (req, res) => {
     );
 
     res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token
+       _id: user._id,
+  name: user.name,
+
+  email: user.email,
+
+  profilePhoto: user.profilePhoto,
+
+  createdAt: user.createdAt,
+
+  isHost: user.isHost,
+
+  verificationStatus:
+    user.verificationStatus,
+
+  token
     });
 
   } catch (error) {
@@ -57,6 +68,11 @@ export const loginUser = async (req, res) => {
   name: user.name,
   email: user.email,
   role: user.role || "user", 
+  profilePhoto : user.profilePhoto,
+  createdAt : user.createdAt,
+  isHost : user.isHost,
+  verificationStatus : user.verificationStatus,
+
   token: token, 
 });
     } else {

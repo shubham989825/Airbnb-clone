@@ -28,6 +28,7 @@ interface User {
   verificationStatus?: string;
   phone?: string;
   idProof?: string;
+  profilePhoto?: string;
 }
 
 interface Booking {
@@ -59,10 +60,10 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
   const [editing, setEditing] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
-
   // Close menu when clicking outside
   useClickOutside(() => setOpenMenu(null));
 
@@ -239,23 +240,64 @@ const Profile = () => {
   }, [activeTab, fetchBookings]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await axiosInstance.put("/api/profile/profile", formData);
-      setUser({ ...user!, ...formData });
-      setEditing(false);
-      alert("Profile updated successfully!");
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      
-      // If API fails, update local state and localStorage
-      const updatedUser = { ...user!, ...formData };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      setEditing(false);
-      alert("Profile updated locally! (API unavailable)");
+  e.preventDefault();
+
+  try {
+    const updatedForm = new FormData();
+
+    updatedForm.append("name", formData.name);
+    updatedForm.append("email", formData.email);
+    updatedForm.append("bio", formData.bio);
+
+    // add image if selected
+    if (profileImage) {
+      updatedForm.append("profilePhoto", profileImage);
     }
-  };
+
+    // send to backend
+    const response = await axiosInstance.put("/profile/profile", updatedForm,
+      );
+
+    // update state
+    setUser(response.data.user);
+
+    // save in localStorage
+    localStorage.setItem(
+      "user",
+      JSON.stringify(response.data.user)
+    );
+
+    setEditing(false);
+
+    alert("Profile updated successfully!");
+
+  } catch (error) {
+
+    console.error("Error updating profile:", error);
+
+    // local fallback
+    const updatedUser = {
+      ...user!,
+      ...formData,
+
+      // preview local image
+      ...(profileImage && {
+        profilePhoto: URL.createObjectURL(profileImage)
+      })
+    };
+
+    setUser(updatedUser);
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(updatedUser)
+    );
+
+    setEditing(false);
+
+    alert("Profile updated locally!");
+  }
+};
 
   const handleBecomeHost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -316,11 +358,15 @@ const Profile = () => {
     <div className="profile-page">
       <div className="profile-header">
         <div className="profile-avatar">
-          <img 
-            src={`https://picsum.photos/seed/${user?.email || "default"}/150/150.jpg`}
-            alt={user?.name || "User"}
-            className="avatar-image"
-          />
+          <img
+  src={
+    user?.profilePhoto
+      ? user.profilePhoto
+      : `https://picsum.photos/seed/${user?.email || "default"}/150/150.jpg`
+  }
+  alt={user?.name || "User"}
+  className="avatar-image"
+/>
           <div className="verification-badge">
             {user?.verificationStatus === "verified" ? "✅ Verified" : "⏳ Pending"}
           </div>
@@ -352,51 +398,131 @@ const Profile = () => {
       </div>
 
       {/* Edit Profile Form */}
-      {editing && (
-        <div className="edit-profile-modal">
-          <div className="modal-content">
-            <h2>Edit Profile</h2>
-            <form onSubmit={handleUpdateProfile} className="edit-form">
-              <div className="form-group">
-                <label>Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Bio</label>
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  rows={4}
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="save-btn">
-                  Save Changes
-                </button>
-                <button type="button" onClick={() => setEditing(false)} className="cancel-btn">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+{editing && (
+  <div className="edit-profile-modal">
+    <div className="modal-content">
 
+      <h2>Edit Profile</h2>
+
+      <form
+        onSubmit={handleUpdateProfile}
+        className="edit-form"
+      >
+
+        {/* Name */}
+        <div className="form-group">
+          <label>Name</label>
+
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                name: e.target.value
+              })
+            }
+            required
+          />
+        </div>
+
+        {/* Email */}
+        <div className="form-group">
+          <label>Email</label>
+
+          <input
+            type="email"
+            value={formData.email}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                email: e.target.value
+              })
+            }
+            required
+          />
+        </div>
+
+        {/* Bio */}
+        <div className="form-group">
+          <label>Bio</label>
+
+          <textarea
+            value={formData.bio}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                bio: e.target.value
+              })
+            }
+            rows={4}
+            placeholder="Tell us about yourself..."
+          />
+        </div>
+
+        {/* Profile Photo */}
+        <div className="form-group">
+
+          <label>Profile Photo</label>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+
+              if (e.target.files?.[0]) {
+                setProfileImage(
+                  e.target.files[0]
+                );
+              }
+
+            }}
+          />
+
+          {/* Preview */}
+          {profileImage && (
+
+            <img
+              src={URL.createObjectURL(profileImage)}
+              alt="preview"
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                marginTop: "10px"
+              }}
+            />
+
+          )}
+
+        </div>
+
+        {/* Buttons */}
+        <div className="form-actions">
+
+          <button
+            type="submit"
+            className="save-btn"
+          >
+            Save Changes
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            className="cancel-btn"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+)}
       {/* Host Application Form */}
       {showHostForm && (
         <div className="profile-edit-section">
@@ -612,7 +738,7 @@ const Profile = () => {
                           </div>
                           
                           {/* 3-Dot Menu */}
-                          <div style={{ position: 'relative' }}>
+                          <div className="listing-menu-container" style={{ position: 'relative' }}>
                             <button 
                               onClick={() => setOpenMenu(openMenu === booking._id ? null : booking._id)}
                               style={{

@@ -8,6 +8,8 @@ import PropertyDetails from "./pages/PropertyDetails";
 import AddProperty from "./pages/AddProperty";
 import MyBookings from "./pages/MyBookings";
 import Wishlist from "./pages/Wishlist";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 
 const App = () => {
   return (
@@ -23,7 +25,9 @@ const App = () => {
           <Route path="/property/:id" element={<PropertyDetails />} />
           <Route path='/add-property' element={<AddProperty />} />
           <Route path="/my-bookings" element={<MyBookings />} />
-          </Routes>
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-cancel" element={<PaymentCancel />} />
+        </Routes>
       </main>
     </div>
   );

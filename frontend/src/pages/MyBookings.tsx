@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import "../styles/MyBookings.css";
 
@@ -59,6 +59,7 @@ const MyBookings = () => {
       setRefreshing(false);
     }
   };
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("🔄 MyBookings component mounted");
@@ -83,13 +84,31 @@ const MyBookings = () => {
     await fetchBookings();
   };
 
+  const deleteBooking = async (bookingId: string) => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) {
+      return;
+    }
+
+    try {
+      console.log("🗑️ Deleting booking:", bookingId);
+      await axiosInstance.delete(`/bookings/${bookingId}`);
+      console.log("✅ Booking cancelled successfully");
+      alert("Booking cancelled successfully!");
+      await fetchBookings();
+    } catch (error: any) {
+      console.error("❌ Error deleting booking:", error);
+      const errorMsg = error.response?.data?.message || error.message || "Failed to cancel booking";
+      alert(errorMsg);
+    }
+  };
+
   const getNights = (checkIn: string, checkOut: string) => {
     const start = new Date(checkIn).getTime();
     const end = new Date(checkOut).getTime();
 
     return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
   };
-   
+
 
   if (loading) return <p className="loading">Loading your trips...</p>;
 
@@ -135,10 +154,12 @@ const MyBookings = () => {
               <img
                 src={booking.listing?.images?.[0] || "/placeholder.jpg"}
                 alt="listing"
+                onClick={() => booking.listing?._id && navigate(`/property/${booking.listing._id}`)}
+                style={{ cursor: booking.listing?._id ? 'pointer' : 'default' }}
               />
 
               <div className="booking-info">
-                <h3>{booking.listing?.title || "Property"}</h3>
+                <h3 style={{ cursor: booking.listing?._id ? 'pointer' : 'default' }} onClick={() => booking.listing?._id && navigate(`/property/${booking.listing._id}`)}>{booking.listing?.title || "Property"}</h3>
                 <p>{booking.listing?.location || "Unknown"}</p>
 
                 <p>
@@ -150,15 +171,30 @@ const MyBookings = () => {
 
                 <p className="price">₹{booking.totalPrice}</p>
 
-                 
-                {booking.listing?._id && (
-                  <Link
-                    to={`/property/${booking.listing._id}`}
-                    className="view-btn"
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
+                  {booking.listing?._id && (
+                    <Link
+                      to={`/property/${booking.listing._id}`}
+                      className="view-btn"
+                    >
+                      View Property
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => deleteBooking(booking._id)}
+                    className="cancel-btn"
+                    style={{
+                      padding: '8px 12px',
+                      background: '#e63946',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
                   >
-                    View Property
-                  </Link>
-                )}
+                    Cancel Booking
+                  </button>
+                </div>
               </div>
             </div>
           ))}

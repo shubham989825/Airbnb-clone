@@ -85,10 +85,45 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-router.put("/", protect, updateUserProfile);
-router.put("/profile", protect, updateUserProfile);
 
-// Become a host
+router.put(
+  "/profile",
+  protect,
+  upload.single("profilePhoto"),
+  async (req, res) => {
+    try {
+
+      const { name, email, bio } = req.body;
+
+      const updateData = {
+        name,
+        email,
+        bio
+      };
+
+      // THIS IS THE MOST IMPORTANT PART
+      if (req.file) {
+        updateData.profilePhoto =
+          `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+      }
+
+      const updatedUser =
+        await User.findByIdAndUpdate(
+          req.user.id,
+          updateData,
+          { new: true }
+        ).select("-password");
+
+      console.log("SAVED USER:", updatedUser);
+
+      res.json({ user: updatedUser });
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
 router.post("/become-host", protect, upload.single("idProof"), async (req, res) => {
   try {
     const { phone } = req.body;
