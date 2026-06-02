@@ -20,10 +20,14 @@ const PaymentSuccess = () => {
 
     const confirm = async () => {
       try {
+        console.log("🔍 PaymentSuccess: Starting confirmation process...");
+        console.log("🔍 PaymentSuccess: Session ID:", sessionId);
+        
         const res = await axiosInstance.get(
           `/payments/confirm-checkout-session?session_id=${encodeURIComponent(sessionId)}`
         );
 
+        console.log("✅ PaymentSuccess: Backend response:", res.data);
         setStatus(res.data?.message || "Booking confirmed");
 
         // 👉 Step 7: store calendar links from backend
@@ -31,7 +35,7 @@ const PaymentSuccess = () => {
 
         setTimeout(() => navigate("/profile"), 3000);
       } catch (err) {
-        console.error(err);
+        console.error("❌ PaymentSuccess: Confirmation failed:", err);
         setStatus("Failed to confirm booking");
       }
     };
