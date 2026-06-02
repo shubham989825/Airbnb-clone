@@ -2,9 +2,7 @@ import express from "express";
 import stripe from "../config/stripe.js";
 import { protect } from "../middleware/authMiddleware.js";
 import Booking from "../models/Booking.js";
-import Listing from "../models/Listing.js"; 
-import nodemailer from "nodemailer";
-import PDFDocument from "pdfkit";
+import Listing from "../models/Listing.js";
 import fs from "fs";
 import path from "path";
 import transporter from "../config/mailer.js";
@@ -43,8 +41,19 @@ router.post("/create-checkout-session", protect, async (req, res) => {
   try {
     const { listingId, checkIn, checkOut, totalPrice, phone } = req.body;
 
-    if (!listingId || !checkIn || !checkOut || !totalPrice || !phone) {
-      return res.status(400).json({ message: "Missing booking details" });
+    const missingFields = [];
+    if (!listingId) missingFields.push("listingId");
+    if (!checkIn) missingFields.push("checkIn");
+    if (!checkOut) missingFields.push("checkOut");
+    if (!totalPrice && totalPrice !== 0) missingFields.push("totalPrice");
+    if (!phone) missingFields.push("phone");
+
+    if (missingFields.length > 0) {
+      console.error("Missing booking details:", missingFields);
+      return res.status(400).json({
+        message: "Missing booking details",
+        missingFields,
+      });
     }
 
     const listing = await Listing.findById(listingId);
@@ -159,68 +168,106 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
     /* =========================
        PDF INVOICE
     ========================= */
-    const pdfPath = await generateInvoice(
-      booking,
-      req.user,
-      listing
-    );
+    let pdfBuffer;
+    try {
+      pdfBuffer = await generateInvoice(
+        booking,
+        req.user,
+        listing
+      );
+      console.log("✅ PDF invoice generated successfully");
+    } catch (pdfError) {
+      console.error("❌ PDF generation failed:", pdfError);
+      console.error("PDF error details:", pdfError.message);
+      // Continue without PDF if generation fails
+      pdfBuffer = null;
+      console.log("⚠️  Proceeding without PDF invoice");
+    }
 
     /* =========================
        CALENDAR FILE + LINK
     ========================= */
     const icsData = generateICS(booking, listing);
-    const googleCalendarUrl = generateGoogleCalendarUrl(booking, listing);
+    const googleCalendarUrl = generateGoogleCalenderUrl(booking, listing);
+    const icsFileUrl = `data:text/calendar;charset=utf-8,${encodeURIComponent(
+      icsData
+    )}`;
 
     /* =========================
        EMAIL USER
     ========================= */
-    await transporter.sendMail({
-      from: process.env.APP_EMAIL,
-      to: req.user.email,
-      subject: "Airbnb Booking Confirmation",
-
-      html: `
-        <h2>Booking Confirmed ✅</h2>
-
-        <p>Hello ${req.user.name},</p>
-
-        <p>Your booking is confirmed successfully.</p>
-
-        <h3>Details</h3>
-
-        <p><b>Property:</b> ${listing.title}</p>
-        <p><b>Location:</b> ${listing.location}</p>
-
-        <p><b>Check In:</b> ${new Date(checkIn).toLocaleDateString()}</p>
-        <p><b>Check Out:</b> ${new Date(checkOut).toLocaleDateString()}</p>
-
-        <p><b>Total Paid:</b> ₹${totalPrice}</p>
-
-        <br/>
-
-        <p>
-          📅 Add to Calendar:
-          <a href="${googleCalendarUrl}" target="_blank">
-            Google Calendar
-          </a>
-        </p>
-
-        <p>Invoice + Calendar file attached.</p>
-
-        <p>Thank you for using Airbnb ❤️</p>
-      `,
-
-      attachments: [
-        {
-          filename: `invoice-${booking._id}.pdf`,
-          path: pdfPath,
-        },
+    try {
+      await transporter.verify();
+      console.log("✅ Email transporter verified successfully");
+      console.log("📧 Sending booking confirmation email to:", req.user.email);
+      
+      const attachments = [
         {
           filename: "booking.ics",
           content: icsData,
         },
-      ],
-    });
+      ];
+      
+      // Only attach PDF if it was generated successfully
+      if (pdfBuffer) {
+        attachments.push({
+          filename: `invoice-${booking._id}.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        });
+      }
+      
+      await transporter.sendMail({
+        from: process.env.APP_EMAIL,
+        to: req.user.email,
+        subject: "Airbnb Booking Confirmation",
+
+        html: `
+          <h2>Booking Confirmed ✅</h2>
+
+          <p>Hello ${req.user.name},</p>
+
+          <p>Your booking is confirmed successfully.</p>
+
+          <h3>Details</h3>
+
+          <p><b>Property:</b> ${listing.title}</p>
+          <p><b>Location:</b> ${listing.location}</p>
+
+          <p><b>Check In:</b> ${new Date(checkIn).toLocaleDateString()}</p>
+          <p><b>Check Out:</b> ${new Date(checkOut).toLocaleDateString()}</p>
+
+          <p><b>Total Paid:</b> ₹${totalPrice}</p>
+
+          <br/>
+
+          <p>
+            📅 Add to Calendar:
+            <a href="${googleCalendarUrl}" target="_blank">
+              Google Calendar
+            </a>
+          </p>
+
+          <p>${pdfBuffer ? "Invoice + Calendar file attached." : "Calendar file attached. (Invoice generation failed)"}</p>
+
+          <p>Thank you for using Airbnb ❤️</p>
+        `,
+
+        attachments,
+      });
+      
+      console.log("✅ Booking confirmation email sent successfully to:", req.user.email);
+    } catch (emailError) {
+      console.error("❌ Email sending failed:", emailError);
+      console.error("Email error details:", {
+        from: process.env.APP_EMAIL,
+        to: req.user.email,
+        error: emailError.message,
+        code: emailError.code,
+      });
+      // Don't fail the booking if email fails
+      console.log("⚠️  Booking created but email not sent");
+    }
 
     /* =========================
        RESPONSE
@@ -228,12 +275,21 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
     res.json({
       message: "Payment successful & booking confirmed",
       booking,
+      calendar: {
+        googleCalendarUrl,
+        icsFileUrl,
+      },
     });
   } catch (error) {
     console.error("Confirm checkout error:", error);
 
+    if (error.response) {
+      console.error("Error response:", error.response);
+    }
+
     res.status(500).json({
       message: "Failed to confirm booking",
+      error: error.message,
     });
   }
 });
