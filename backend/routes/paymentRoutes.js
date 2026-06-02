@@ -207,6 +207,8 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
     console.log("🔍 Starting email sending process...");
     console.log("📧 User email:", req.user.email);
     console.log("📧 APP_EMAIL configured:", process.env.APP_EMAIL ? "YES" : "NO");
+    console.log("📧 APP_EMAIL_PASSWORD configured:", process.env.APP_EMAIL_PASSWORD ? "YES" : "NO");
+    console.log("📧 APP_EMAIL_PASSWORD length:", process.env.APP_EMAIL_PASSWORD?.length || 0);
     
     try {
       console.log("🔍 Verifying email transporter...");
