@@ -207,8 +207,12 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
     console.log("🔍 Starting email sending process...");
     console.log("📧 User email:", req.user.email);
     console.log("📧 APP_EMAIL configured:", process.env.APP_EMAIL ? "YES" : "NO");
+    console.log("📧 APP_EMAIL value:", process.env.APP_EMAIL);
     console.log("📧 APP_EMAIL_PASSWORD configured:", process.env.APP_EMAIL_PASSWORD ? "YES" : "NO");
     console.log("📧 APP_EMAIL_PASSWORD length:", process.env.APP_EMAIL_PASSWORD?.length || 0);
+    console.log("📧 APP_EMAIL_PASSWORD has spaces:", process.env.APP_EMAIL_PASSWORD?.includes(" ") ? "YES" : "NO");
+    console.log("📧 APP_EMAIL_PASSWORD first char:", process.env.APP_EMAIL_PASSWORD?.[0]);
+    console.log("📧 APP_EMAIL_PASSWORD last char:", process.env.APP_EMAIL_PASSWORD?.[process.env.APP_EMAIL_PASSWORD?.length - 1]);
     
     try {
       console.log("🔍 Verifying email transporter...");
