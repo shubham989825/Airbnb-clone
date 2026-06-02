@@ -109,19 +109,25 @@ router.post("/create-checkout-session", protect, async (req, res) => {
 ========================= */
 router.get("/confirm-checkout-session", protect, async (req, res) => {
   try {
+    console.log("🔍 Starting payment confirmation process...");
     const sessionId = req.query.session_id;
 
     if (!sessionId) {
+      console.error("❌ Missing session id");
       return res.status(400).json({ message: "Missing session id" });
     }
 
+    console.log("🔍 Retrieving Stripe session:", sessionId);
     const session = await stripe.checkout.sessions.retrieve(
       sessionId.toString()
     );
 
     if (!session || session.payment_status !== "paid") {
+      console.error("❌ Payment not completed. Status:", session?.payment_status);
       return res.status(400).json({ message: "Payment not completed" });
     }
+
+    console.log("✅ Payment confirmed. Session metadata:", session.metadata);
 
     const {
       listingId,
@@ -155,6 +161,7 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
     /* =========================
        CREATE BOOKING
     ========================= */
+    console.log("🔍 Creating booking...");
     const booking = await Booking.create({
       user: req.user._id,
       listing: listingId,
@@ -164,6 +171,7 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
       paymentStatus: "paid",
       phone,
     });
+    console.log("✅ Booking created successfully. ID:", booking._id);
 
     /* =========================
        PDF INVOICE
@@ -196,7 +204,12 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
     /* =========================
        EMAIL USER
     ========================= */
+    console.log("🔍 Starting email sending process...");
+    console.log("📧 User email:", req.user.email);
+    console.log("📧 APP_EMAIL configured:", process.env.APP_EMAIL ? "YES" : "NO");
+    
     try {
+      console.log("🔍 Verifying email transporter...");
       await transporter.verify();
       console.log("✅ Email transporter verified successfully");
       console.log("📧 Sending booking confirmation email to:", req.user.email);
@@ -217,7 +230,8 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
         });
       }
       
-      await transporter.sendMail({
+      console.log("🔍 Sending email with attachments:", attachments.length);
+      const emailResult = await transporter.sendMail({
         from: process.env.APP_EMAIL,
         to: req.user.email,
         subject: "Airbnb Booking Confirmation",
@@ -257,6 +271,7 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
       });
       
       console.log("✅ Booking confirmation email sent successfully to:", req.user.email);
+      console.log("📧 Email result:", emailResult.messageId);
     } catch (emailError) {
       console.error("❌ Email sending failed:", emailError);
       console.error("Email error details:", {
@@ -264,6 +279,7 @@ router.get("/confirm-checkout-session", protect, async (req, res) => {
         to: req.user.email,
         error: emailError.message,
         code: emailError.code,
+        response: emailError.response,
       });
       // Don't fail the booking if email fails
       console.log("⚠️  Booking created but email not sent");
