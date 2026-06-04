@@ -1,12 +1,10 @@
 import nodemailer from 'nodemailer';
 
-// Use Ethereal Email for development (fake SMTP service)
 const transporter = nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
+    service: "gmail",
     auth: {
-        user: 'test@ethereal.email',
-        pass: 'testpassword',
+        user: process.env.APP_EMAIL,
+        pass: process.env.APP_EMAIL_PASSWORD,
     },
 });
 
