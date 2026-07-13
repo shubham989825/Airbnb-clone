@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.DEV 
-  ? "http://localhost:5000/api"
+  ? "http://127.0.0.1:5000/api"
   : "https://airbnb-clone-hz9q.onrender.com/api";
 
 const axiosInstance = axios.create({
@@ -33,7 +33,12 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("API Error:", error.response?.status, error.response?.data);
+    console.error("API Error:", {
+      status: error.response?.status,
+      data: error.response?.data,
+      url: error.config?.url,
+      method: error.config?.method,
+    });
     return Promise.reject(error);
   }
 );

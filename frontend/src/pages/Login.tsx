@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import "../styles/Login.css";
@@ -10,6 +10,57 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState("");
+
+  const handleGoogleCredentialResponse = async (response: any) => {
+    setGoogleError("");
+    setGoogleLoading(true);
+
+    try {
+      const res = await axiosInstance.post("/auth/google-login", {
+        idToken: response.credential,
+      });
+
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify({
+          _id: res.data._id,
+          name: res.data.name,
+          email: res.data.email,
+          role: res.data.role || "user",
+        }));
+        alert(`Login successful! Welcome ${res.data.name} 🎉`);
+        navigate("/");
+      } else {
+        setGoogleError(res.data.message || "Google login failed");
+      }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || error.message || "Google login failed";
+      setGoogleError(errorMsg);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const google = (window as any).google;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (!google || !clientId) {
+      return;
+    }
+
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleCredentialResponse,
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById("googleSignInDiv"),
+      { theme: "outline", size: "large", width: "100%", text: "continue_with" }
+    );
+  }, []);
 
 const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +145,28 @@ const handleLogin = async (e: React.FormEvent) => {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        <div style={{ margin: "20px 0", textAlign: "center" }}>
+          <span style={{ color: "#777", fontSize: "14px" }}>or</span>
+        </div>
+
+        <div id="googleSignInDiv" style={{ width: "100%", marginBottom: "10px" }} />
+        {googleLoading && (
+          <div style={{ marginBottom: "12px", color: "#2e7d32" }}>
+            Signing in with Google...
+          </div>
+        )}
+        {googleError && (
+          <div style={{ marginBottom: "12px", color: "#c62828", fontSize: "14px" }}>
+            ⚠️ {googleError}
+          </div>
+        )}
+
+        <p className="login-footer">
+          <Link to="/forgot-password" className="login-link">
+            Forgot password?
+          </Link>
+        </p>
 
         <p className="login-footer">
           Don't have an account?{" "}

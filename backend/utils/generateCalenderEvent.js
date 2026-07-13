@@ -53,7 +53,6 @@ export const generateGoogleCalenderUrl = (booking, listing) => {
 
 
 
-
 export const generateICS = (booking, listing) => {
   const startDate = new Date(booking.checkIn);
   const endDate = new Date(booking.checkOut);

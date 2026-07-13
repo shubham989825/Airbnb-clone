@@ -51,6 +51,7 @@ const PropertyDetails = () => {
   const [property, setProperty] = useState<Property | null>(null);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);  
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [reviewRefresh, setReviewRefresh] = useState(0);
@@ -186,6 +187,11 @@ const PropertyDetails = () => {
       return;
     }
 
+    if (!phone) {
+      alert("Please enter your phone number");
+      return;
+    }
+
     const nights = Math.ceil(
       (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
       (1000 * 60 * 60 * 24)
@@ -207,7 +213,10 @@ const PropertyDetails = () => {
         checkIn,
         checkOut,
         totalPrice,
+        phone,
       };
+
+      console.log("Payment payload:", payload);
 
       if (existingBooking) {
         if (existingBooking.paymentStatus === 'paid') {
@@ -404,6 +413,16 @@ const PropertyDetails = () => {
                   value={checkOut}
                   onChange={(e) => setCheckOut(e.target.value)}
                   className="date-input"
+                />
+              </div>
+              <div className="phone-group">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="login-input"
+                  placeholder="Enter phone number"
                 />
               </div>
               <div className="guests-group">

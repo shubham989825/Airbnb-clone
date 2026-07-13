@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
+import { PassThrough } from "stream";
 
 const generateInvoice = (booking, user, listing) => {
   return new Promise((resolve, reject) => {
@@ -8,19 +9,21 @@ const generateInvoice = (booking, user, listing) => {
     const invoicesDir = path.join(process.cwd(), "invoices");
 
     if (!fs.existsSync(invoicesDir)) {
-      fs.mkdirSync(invoicesDir);
+      fs.mkdirSync(invoicesDir, { recursive: true });
     }
 
-    const filePath = path.join(
-      invoicesDir,
-      `invoice-${booking._id}.pdf`
-    );
-
+    const filePath = path.join(invoicesDir, `invoice-${booking._id}.pdf`);
     const doc = new PDFDocument();
+    const fileStream = fs.createWriteStream(filePath);
+    const bufferStream = new PassThrough();
+    const chunks = [];
 
-    const stream = fs.createWriteStream(filePath);
+    bufferStream.on("data", (chunk) => chunks.push(chunk));
+    bufferStream.on("error", reject);
+    fileStream.on("error", reject);
 
-    doc.pipe(stream);
+    doc.pipe(bufferStream);
+    bufferStream.pipe(fileStream);
 
     // Title
     doc.fontSize(24).text("airbnb Invoice", {
@@ -53,11 +56,9 @@ const generateInvoice = (booking, user, listing) => {
 
     doc.end();
 
-    stream.on("finish", () => {
-      resolve(filePath);
+    fileStream.on("finish", () => {
+      resolve(Buffer.concat(chunks));
     });
-
-    stream.on("error", reject);
   });
 };
 

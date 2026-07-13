@@ -44,11 +44,22 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    passwordResetToken: {
+      type: String,
+    },
+    passwordResetExpires: {
+      type: Date,
+    },
     role: {
-  type: String,
-  enum: ["user", "host"],
-  default: "user"
-}
+      type: String,
+      enum: ["user", "host"],
+      default: "user"
+    }
 }, {timestamps: true});
 
 const User = mongoose.model('User', userSchema);
